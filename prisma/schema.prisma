@@ -54,7 +54,7 @@ model Profile {
 
 // Contact Management
 model Contact {
-  id                    String   @id @default(cuid()) @map("id")
+  id                    Int      @id @default(autoincrement()) @map("id")
   userId                String   @map("user_id") @db.Uuid
   fullName              String   @map("full_name")
   emails                String[] @map("emails")

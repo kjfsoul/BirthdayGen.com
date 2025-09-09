@@ -4,9 +4,8 @@ export type FooterSection = { title: string; items: FooterItem[] };
 const tools: FooterItem[] = [
   { label: "Card Generator", href: "/generator" },
   { label: "Party Planner", href: "/party-planner" },
-  { label: "Gift Guide", href: "/gift-guide" },
-  { label: "Automation", href: "/automation" },
-  { label: "Auto-send Cards & Gifts", href: "/autosend" },
+  { label: "Personalized Gifts", href: "/gift-guide" },
+  { label: "Send Gifts Automatically", href: "/automation" },
 ];
 
 const community: FooterItem[] = [

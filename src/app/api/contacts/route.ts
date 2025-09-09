@@ -14,16 +14,12 @@ export async function GET(request: NextRequest) {
     }
 
     const contacts = await db.contact.findMany({
-      where: { user_id: userId },
+      where: { userId },
       include: {
-        cards: {
-          orderBy: { created_at: 'desc' }
-        },
-        gift_recommendations: {
-          orderBy: { created_at: 'desc' }
-        }
+        cards: true,
+        gift_recommendations: true
       },
-      orderBy: { created_at: 'desc' }
+      orderBy: { id: 'desc' }
     })
 
     return NextResponse.json(contacts)
@@ -60,15 +56,14 @@ export async function POST(request: NextRequest) {
 
     const contact = await db.contact.create({
       data: {
-        user_id: userId,
-        first_name: firstName,
-        last_name: lastName || null,
-        email: email || null,
-        phone: phone || null,
-        birthday_date: birthdayDate,
-        birthday_year: birthdayYear || null,
-        relationship: relationship || null,
-        notes: notes || null
+        userId,
+        fullName: firstName,
+        emails: email ? [email] : [],
+        birthday: birthdayDate ? new Date(birthdayDate) : null,
+        gender: null,
+        social_handles: undefined,
+        interests: undefined,
+        categoryIds: []
       },
       include: {
         cards: true,

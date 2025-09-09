@@ -9,15 +9,14 @@ type NavItem = { href: string; label: string };
 const BASE_ITEMS: NavItem[] = [
   { href: "/", label: "Home" },
   { href: "/generator", label: "Card Maker" },
-  { href: "/automation", label: "Automation" },
+  { href: "/automation", label: "Send Gifts Automatically" },
   { href: "/party-planner", label: "Party Planner" },
-  { href: "/gift-guide", label: "Gift Guide" },
+  { href: "/gift-guide", label: "Personalized Gifts" },
   { href: "/showcase", label: "Showcase" },
 ];
 
 const EXTRA_ITEMS: NavItem[] = [
   { href: "/contacts", label: "Contacts Dashboard" },
-  { href: "/autosend", label: "Auto-send Cards & Gifts" },
 ];
 
 function NavLink({ item, active }: { item: NavItem; active: boolean }) {
