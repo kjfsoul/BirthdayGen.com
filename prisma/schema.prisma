@@ -1,0 +1,442 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Core User Management (maps to Supabase auth.users)
+model User {
+  id                    String   @id @default(cuid()) @map("id") @db.Uuid
+  email                 String   @unique @map("email")
+  aud                   String?  @map("aud")
+  role                  String?  @map("role")
+  first_name            String?  @map("first_name")
+  last_name             String?  @map("last_name")
+  aura_type             String?  @map("aura_type")
+  email_confirmed_at    DateTime? @map("email_confirmed_at") @db.Timestamptz
+  aura_quiz_completed   Boolean  @default(false) @map("aura_quiz_completed")
+  created_at            DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updated_at            DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  profiles              Profile[]
+  contacts              Contact[]
+  contactCategories     ContactCategory[]
+  importJobs            ImportJob[]
+  cards                 Card[]
+  gift_recommendations  GiftRecommendation[]
+  aura_quiz_responses   AuraQuizResponse[]
+
+  @@map("users")
+}
+
+// Profile table (extends auth.users)
+model Profile {
+  id                    String   @id @default(cuid()) @map("id") @db.Uuid
+  user_id               String   @unique @map("user_id") @db.Uuid
+  first_name            String?  @map("first_name")
+  last_name             String?  @map("last_name")
+  aura_type             String?  @map("aura_type")
+  aura_quiz_completed   Boolean  @default(false) @map("aura_quiz_completed")
+  created_at            DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updated_at            DateTime @default(now()) @map("updated_at") @db.Timestamptz
+
+  user                  User     @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "profiles_user_id_fkey")
+
+  @@map("profiles")
+}
+
+// Contact Management
+model Contact {
+  id                    String   @id @default(cuid()) @map("id")
+  userId                String   @map("user_id") @db.Uuid
+  fullName              String   @map("full_name")
+  emails                String[] @map("emails")
+  birthday              DateTime? @map("birthday") @db.Timestamptz
+  gender                String?  @map("gender")
+  social_handles        Json?    @map("social_handles") @db.JsonB
+  interests             Json?    @map("interests") @db.JsonB
+  categoryIds           String[] @map("category_ids")
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // RLS: userId = auth.uid()
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "contacts_user_id_fkey")
+  cards                 Card[]
+  gift_recommendations  GiftRecommendation[]
+
+  @@map("contacts")
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// Card System
+model Card {
+  id                    Int      @id @default(autoincrement()) @map("id")
+  user_id               String?  @map("user_id") @db.Uuid
+  contact_id            Int?     @map("contact_id")
+  title                 String   @map("title")
+  message               String   @map("message")
+  template              String   @map("template")
+  background_style      String   @map("background_style")
+  text_style            String   @map("text_style")
+  elements              Json?    @map("elements") @db.JsonB
+  status                String   @default("draft") @map("status")
+  sent_at               DateTime? @map("sent_at") @db.Timestamptz
+  created_at            DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user                  User?    @relation(fields: [user_id], references: [id], onDelete: SetNull, map: "cards_user_id_fkey")
+  contact               Contact? @relation(fields: [contact_id], references: [id], onDelete: SetNull, map: "cards_contact_id_fkey")
+  card_designs          CardDesign[]
+
+  @@map("cards")
+}
+
+model CardDesign {
+  id                    Int      @id @default(autoincrement()) @map("id")
+  message_id            Int?     @map("message_id")
+  font_family           String   @default("font-serif") @map("font_family")
+  font_size             Int      @default(24) @map("font_size")
+  text_color            String   @default("#000000") @map("text_color")
+  background_color      String   @default("#ffffff") @map("background_color")
+  custom_text           String?  @map("custom_text")
+  sparkle_effects       Json?    @map("sparkle_effects") @db.JsonB
+  custom_image_url      String?  @map("custom_image_url")
+  created_at            DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  card                  Card?    @relation(fields: [message_id], references: [id], onDelete: SetNull, map: "card_designs_message_id_fkey")
+
+  @@map("card_designs")
+}
+
+// Gift Recommendations
+model GiftRecommendation {
+  id                    Int      @id @default(autoincrement()) @map("id")
+  user_id               String?  @map("user_id") @db.Uuid
+  contact_id            Int?     @map("contact_id")
+  aura_type             String   @map("aura_type")
+  recommendations       Json     @map("recommendations") @db.JsonB
+  created_at            DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user                  User?    @relation(fields: [user_id], references: [id], onDelete: SetNull, map: "gift_recommendations_user_id_fkey")
+  contact               Contact? @relation(fields: [contact_id], references: [id], onDelete: SetNull, map: "gift_recommendations_contact_id_fkey")
+
+  @@map("gift_recommendations")
+}
+
+// Aura Quiz System
+model AuraQuizResponse {
+  id                    Int      @id @default(autoincrement()) @map("id")
+  user_id               String?  @map("user_id") @db.Uuid
+  responses             Json     @map("responses") @db.JsonB
+  result                String   @map("result")
+  created_at            DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user                  User?    @relation(fields: [user_id], references: [id], onDelete: SetNull, map: "aura_quiz_responses_user_id_fkey")
+
+  @@map("aura_quiz_responses")
+}
+
+// Message System (for email/SMS delivery)
+model Message {
+  id                    Int      @id @default(autoincrement()) @map("id")
+  uuid                  String   @unique @default(uuid()) @map("uuid") @db.Uuid
+  topic                 String   @map("topic")
+  recipient_name        String   @map("recipient_name")
+  extension             String   @map("extension")
+  payload               Json?    @map("payload") @db.JsonB
+  recipient_email       String?  @map("recipient_email")
+  recipient_phone       String?  @map("recipient_phone")
+  event                 String?  @map("event")
+  is_private            Boolean  @default(false) @map("private")
+  recipient_gender      String?  @map("recipient_gender")
+  relationship_role     String   @map("relationship_role")
+  personality           String   @map("personality")
+  quirks                String?  @map("quirks")
+  sender_email          String   @map("sender_email")
+  sender_phone          String?  @map("sender_phone")
+  delivery_method       String   @map("delivery_method")
+  is_premium            Boolean  @default(false) @map("is_premium")
+  created_at            DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  purchases             Purchase[]
+
+  @@map("messages")
+}
+
+model PremiumMessage {
+  id                    Int      @id @default(autoincrement()) @map("id")
+  purchase_id           Int      @map("purchase_id")
+  content               String   @map("content")
+  order_index           Int      @map("order_index")
+  created_at            DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  purchase              Purchase @relation(fields: [purchase_id], references: [id], onDelete: Cascade, map: "premium_messages_purchase_id_fkey")
+
+  @@map("premium_messages")
+}
+
+// Purchase/Billing System
+model Purchase {
+  id                    Int      @id @default(autoincrement()) @map("id")
+  email                 String   @map("email")
+  original_message_id   Int?     @map("original_message_id")
+  stripe_checkout_session_id String? @map("stripe_checkout_session_id")
+  status                String   @default("pending") @map("status")
+  created_at            DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  premium_messages      PremiumMessage[]
+  message               Message? @relation(fields: [original_message_id], references: [id], onDelete: SetNull, map: "purchases_original_message_id_fkey")
+
+  @@map("purchases")
+}
+
+// Background/Occasion System (for templates and assets)
+model BgOccasion {
+  id                    BigInt   @id @default(autoincrement()) @map("id")
+  slug                  String   @map("slug")
+  label                 String   @map("label")
+  created_at            DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  bg_asset_occasions    BgAssetOccasion[]
+
+  @@map("bg_occasions")
+}
+
+model BgAssetOccasion {
+  asset_id              BigInt   @map("asset_id")
+  occasion_id           BigInt   @map("occasion_id")
+
+  asset                 VaultAsset @relation(fields: [asset_id], references: [id], onDelete: Cascade, map: "bg_asset_occasions_asset_id_fkey")
+  occasion              BgOccasion @relation(fields: [occasion_id], references: [id], onDelete: Cascade, map: "bg_asset_occasions_occasion_id_fkey")
+
+  @@id([asset_id, occasion_id])
+  @@map("bg_asset_occasions")
+}
+
+// Vault/Asset Management
+model VaultAsset {
+  id                    BigInt   @id @default(autoincrement()) @map("id")
+  pexels_id             BigInt?  @map("pexels_id")
+  kind                  String   @map("kind")
+  pexels_url            String   @map("pexels_url")
+  photographer          String?  @map("photographer")
+  photographer_url      String?  @map("photographer_url")
+  width                 Int?     @map("width")
+  height                Int?     @map("height")
+  avg_color             String?  @map("avg_color")
+  src                   Json?    @map("src") @db.JsonB
+  orientation           String?  @map("orientation")
+  tags                  String[] @map("tags")
+  brand                 String?  @map("brand")
+  queries               String[] @map("queries")
+  is_public             Boolean  @default(false) @map("is_public")
+  created_at            DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  bg_asset_occasions    BgAssetOccasion[]
+  bg_user_vaults        BgUserVault[]
+  vault_collection_items VaultCollectionItem[]
+
+  @@map("vault_assets")
+}
+
+model BgUserVault {
+  user_id               String   @map("user_id") @db.Uuid
+  asset_id              BigInt   @map("asset_id")
+  created_at            DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  asset                 VaultAsset @relation(fields: [asset_id], references: [id], onDelete: Cascade, map: "bg_user_vault_asset_id_fkey")
+
+  @@id([user_id, asset_id])
+  @@map("bg_user_vault")
+}
+
+model VaultCollection {
+  id                    BigInt   @id @default(autoincrement()) @map("id")
+  name                  String   @map("name")
+  brand                 String?  @map("brand")
+  created_at            DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  vault_collection_items VaultCollectionItem[]
+
+  @@map("vault_collections")
+}
+
+model VaultCollectionItem {
+  collection_id         BigInt   @map("collection_id")
+  asset_id              BigInt   @map("asset_id")
+
+  collection            VaultCollection @relation(fields: [collection_id], references: [id], onDelete: Cascade, map: "vault_collection_items_collection_id_fkey")
+  asset                 VaultAsset      @relation(fields: [asset_id], references: [id], onDelete: Cascade, map: "vault_collection_items_asset_id_fkey")
+
+  @@id([collection_id, asset_id])
+  @@map("vault_collection_items")
+}
+
+// Card Templates and Holidays
+model CardTemplate {
+  id                    Int      @id @default(autoincrement()) @map("id")
+  name                  String   @map("name")
+  description           String   @map("description")
+  category              String   @map("category")
+  config                String   @map("config")
+  created_at            DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("card_templates")
+}
+
+model Holiday {
+  id                    Int      @id @default(autoincrement()) @map("id")
+  name                  String   @map("name")
+  date                  DateTime @map("date") @db.Date
+  category              String   @map("category")
+  isRecurring           Boolean  @default(true) @map("is_recurring")
+  created_at            DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("holidays")
+}
+
+// Additional models for completeness (based on your database)
+model ArtworkGeneration {
+  id                    Int      @id @default(autoincrement()) @map("id")
+  workflow_id           String   @map("workflow_id")
+  concept_id            String   @map("concept_id")
+  artwork_url           String   @map("artwork_url")
+  design_metadata       Json?    @map("design_metadata")
+  technical_specs       Json?    @map("technical_specs")
+  created_at            DateTime? @map("created_at")
+
+  @@map("artwork_generations")
+}
+
+model BgIngestLog {
+  id                    BigInt   @id @default(autoincrement()) @map("id")
+  run_id                String   @unique @default(uuid()) @map("run_id") @db.Uuid
+  source                String   @map("source")
+  pexels_id             BigInt?  @map("pexels_id")
+  asset_id              BigInt?  @map("asset_id")
+  occasion_slug         String?  @map("occasion_slug")
+  template_key          String?  @map("template_key")
+  tags                  String[] @map("tags")
+  status                String   @map("status")
+  message               String?  @map("message")
+  created_at            DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("bg_ingest_log")
+}
+
+model LegalValidation {
+  id                    Int      @id @default(autoincrement()) @map("id")
+  workflow_id           String   @map("workflow_id")
+  concept_id            String   @map("concept_id")
+  compliance_status     String   @map("compliance_status")
+  compliance_details    Json?    @map("compliance_details")
+  legal_score           Float?   @map("legal_score")
+  recommendations       Json?    @map("recommendations")
+  created_at            DateTime? @map("created_at")
+
+  @@map("legal_validations")
+}
+
+model ProductConcept {
+  id                    Int      @id @default(autoincrement()) @map("id")
+  workflow_id           String   @map("workflow_id")
+  concept_id            String   @map("concept_id")
+  title                 String   @map("title")
+  description           String   @map("description")
+  category              String   @map("category")
+  target_audience       String   @map("target_audience")
+  estimated_demand      Float?   @map("estimated_demand")
+  uniqueness_score      Float?   @map("uniqueness_score")
+  production_feasibility Float?   @map("production_feasibility")
+  created_at            DateTime? @map("created_at")
+
+  @@map("product_concepts")
+}
+
+model ProductPublication {
+  id                    Int      @id @default(autoincrement()) @map("id")
+  workflow_id           String   @map("workflow_id")
+  product_id            String   @map("product_id")
+  platform              String   @map("platform")
+  product_url           String   @map("product_url")
+  status                String   @map("status")
+  estimated_revenue     Float?   @map("estimated_revenue")
+  publication_metadata  Json?    @map("publication_metadata")
+  created_at            DateTime? @map("created_at")
+
+  @@map("product_publications")
+}
+
+model TrendAnalysis {
+  id                    Int      @id @default(autoincrement()) @map("id")
+  workflow_id           String   @map("workflow_id")
+  topic                 String   @map("topic")
+  category              String   @map("category")
+  relevance_score       Float    @map("relevance_score")
+  search_volume         Int?     @map("search_volume")
+  growth_rate           Float?   @map("growth_rate")
+  related_keywords      Json?    @map("related_keywords")
+  market_opportunity    String?  @map("market_opportunity")
+  competitive_analysis  String?  @map("competitive_analysis")
+  source                String   @map("source")
+  perplexity_citations  Json?    @map("perplexity_citations")
+  api_usage             Json?    @map("api_usage")
+  created_at            DateTime? @map("created_at")
+
+  @@map("trend_analyses")
+}
+
+model WorkflowExecution {
+  id                    Int      @id @default(autoincrement()) @map("id")
+  workflow_id           String   @map("workflow_id")
+  workflow_name         String   @map("workflow_name")
+  execution_status      String   @map("execution_status")
+  stage_results         Json?    @map("stage_results")
+  execution_time        Float?   @map("execution_time")
+  success_rate          Float?   @map("success_rate")
+  final_products        Json?    @map("final_products")
+  errors                Json?    @map("errors")
+  started_at            DateTime? @map("started_at")
+  completed_at          DateTime? @map("completed_at")
+  created_at            DateTime? @map("created_at")
+  updated_at            DateTime? @map("updated_at")
+
+  @@map("workflow_executions")
+}
+
+model ContactCategory {
+ id                    String   @id @default(cuid()) @map("id")
+ userId                String   @map("user_id") @db.Uuid
+ name                  String   @map("name")
+ createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+ // RLS: userId = auth.uid()
+ user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "contact_categories_user_id_fkey")
+
+ @@map("contact_categories")
+ @@index([userId])
+ @@index([createdAt])
+}
+
+model ImportJob {
+ id                    String   @id @default(cuid()) @map("id")
+ userId                String   @map("user_id") @db.Uuid
+ provider              String   @map("provider")
+ status                String   @map("status")
+ meta                  Json?    @map("meta") @db.JsonB
+ createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+ // RLS: userId = auth.uid()
+ user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "import_jobs_user_id_fkey")
+
+ @@map("import_jobs")
+ @@index([userId])
+ @@index([createdAt])
+}
