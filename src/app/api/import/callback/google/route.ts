@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state') ?? '';
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const stateCookie = cookieStore.get('oauth_state_google')?.value ?? '';
   cookieStore.set({ name: 'oauth_state_google', value: '', httpOnly: true, sameSite: 'lax', secure: true, path: '/', maxAge: 0 });
 
