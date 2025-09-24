@@ -1,4 +1,8 @@
-import { Suspense } from 'react';
+'use client';
+
+import { Suspense, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 import { ContactList } from '@/components/contacts/ContactList';
 import { UpcomingBirthdays } from '@/components/contacts/UpcomingBirthdays';
 import { ImportAppleVCF } from '@/components/contacts/ImportAppleVCF';
@@ -7,9 +11,7 @@ import { ImportMicrosoft } from '@/components/contacts/ImportMicrosoft';
 import { ImportLinkedInCSV } from '@/components/contacts/ImportLinkedInCSV';
 import { ImportFacebook } from '@/components/contacts/ImportFacebook';
 
-export const metadata = { title: "Contacts Dashboard" };
-
-export default function ContactsPage() {
+function ContactsPageContent() {
   return (
     <main className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -53,4 +55,31 @@ export default function ContactsPage() {
       </section>
     </main>
   );
+}
+
+export default function ContactsPage() {
+  const searchParams = useSearchParams();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const importedCount = searchParams.get('importedCount');
+    const error = searchParams.get('error');
+
+    if (importedCount) {
+      toast({
+        title: 'Import Successful',
+        description: `${importedCount} contacts were imported.`,
+      });
+    }
+
+    if (error) {
+      toast({
+        title: 'Import Failed',
+        description: 'There was an error importing your contacts. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  }, [searchParams, toast]);
+
+  return <ContactsPageContent />;
 }
