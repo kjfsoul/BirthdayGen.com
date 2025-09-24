@@ -1,10 +1,13 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
   Mail,
   Lock,
@@ -14,8 +17,10 @@ import {
   Gift,
   ArrowRight,
   Eye,
-  EyeOff
+  EyeOff,
+  AlertCircle
 } from "lucide-react"
+import Link from 'next/link'
 
 export default function AuthPage() {
   const [mode, setMode] = useState<'signin' | 'signup'>('signup')
@@ -26,15 +31,66 @@ export default function AuthPage() {
     fullName: '',
     confirmPassword: ''
   })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+  const router = useRouter()
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleGoogleSignIn = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${location.origin}/auth/callback`,
+      },
+    })
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle authentication logic here
-    console.log('Auth submission:', { mode, formData })
+    setLoading(true)
+    setError(null)
+    setSuccess(null)
+
+    if (mode === 'signup') {
+      if (formData.password !== formData.confirmPassword) {
+        setError("Passwords do not match.")
+        setLoading(false)
+        return
+      }
+
+      const { error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            full_name: formData.fullName,
+          },
+        },
+      })
+
+      if (error) {
+        setError(error.message)
+      } else {
+        setSuccess("Please check your email to verify your account.")
+      }
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      })
+
+      if (error) {
+        setError(error.message)
+      } else {
+        router.push('/')
+      }
+    }
+
+    setLoading(false)
   }
 
   const benefits = [
@@ -107,7 +163,7 @@ export default function AuthPage() {
             <CardContent className="space-y-6">
               {/* OAuth Buttons */}
               <div className="space-y-3">
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full" onClick={handleGoogleSignIn}>
                   <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                     <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -129,6 +185,20 @@ export default function AuthPage() {
 
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+                {success && (
+                  <Alert variant="default">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Success</AlertTitle>
+                    <AlertDescription>{success}</AlertDescription>
+                  </Alert>
+                )}
                 {mode === 'signup' && (
                   <div className="relative">
                     <User className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
@@ -190,14 +260,27 @@ export default function AuthPage() {
 
                 <Button
                   type="submit"
+                  disabled={loading}
                   className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white text-lg"
                 >
-                  <div className="flex items-center space-x-2">
-                    <span>{mode === 'signup' ? 'Create Account' : 'Sign In'}</span>
-                    <ArrowRight className="h-5 w-5" />
-                  </div>
+                  {loading ? 'Processing...' : (
+                    <div className="flex items-center space-x-2">
+                      <span>{mode === 'signup' ? 'Create Account' : 'Sign In'}</span>
+                      <ArrowRight className="h-5 w-5" />
+                    </div>
+                  )}
                 </Button>
               </form>
+
+              {mode === 'signin' && (
+                <div className="text-center text-sm">
+                  <Link href="/auth/forgot-password" passHref>
+                    <button className="font-medium text-purple-600 hover:text-purple-700 transition-colors">
+                      Forgot password?
+                    </button>
+                  </Link>
+                </div>
+              )}
 
               {/* Toggle Mode */}
               <div className="text-center">
