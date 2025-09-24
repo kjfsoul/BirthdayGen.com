@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createBrowserClient } from '@supabase/ssr';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
@@ -22,16 +23,30 @@ export function UpcomingBirthdays() {
   const [horizon, setHorizon] = useState(60); // days
   const [loading, setLoading] = useState(true);
 
-  // Placeholder userId
-  const userId = 'placeholder-user-id';
+  const [userId, setUserId] = useState<string | null>(null);
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setUserId(session.user.id);
+      }
+    };
+    getUser();
+  }, [supabase.auth]);
 
   useEffect(() => {
     const fetchContacts = async () => {
+      if (!userId) return;
       try {
-        const response = await fetch(`/api/contacts/search?userId=${userId}`);
+        const response = await fetch(`/api/contacts?userId=${userId}`);
         if (response.ok) {
           const data = await response.json();
-          const contactsWithBirthdays = data.contacts.filter((c: Contact) => c.birthday);
+          const contactsWithBirthdays = data.filter((c: Contact) => c.birthday);
 
           const upcoming: UpcomingBirthday[] = contactsWithBirthdays
             .map((contact: Contact) => {
@@ -67,7 +82,9 @@ export function UpcomingBirthdays() {
       }
     };
 
-    fetchContacts();
+    if (userId) {
+      fetchContacts();
+    }
   }, [horizon, userId]);
 
   if (loading) {

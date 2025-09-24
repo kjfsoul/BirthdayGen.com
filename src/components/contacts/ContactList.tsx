@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { createBrowserClient } from '@supabase/ssr';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -33,31 +34,51 @@ export function ContactList() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Placeholder userId - in real app, get from auth
-  const userId = 'placeholder-user-id';
+  const [userId, setUserId] = useState<string | null>(null);
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setUserId(session.user.id);
+      }
+    };
+    getUser();
+  }, [supabase.auth]);
 
   const fetchContacts = useCallback(async () => {
+    if (!userId) return;
     try {
-      const params = new URLSearchParams({
-        userId,
-        q: search,
-        categoryIds: selectedCategories.join(','),
-        month: selectedMonth,
-      });
-
-      const response = await fetch(`/api/contacts/search?${params}`);
+      const params = new URLSearchParams({ userId });
+      const response = await fetch(`/api/contacts?${params}`);
       if (response.ok) {
         const data = await response.json();
-        setContacts(data.contacts);
+        setContacts(data);
       }
     } catch (error) {
       console.error('Failed to fetch contacts', error);
     } finally {
       setLoading(false);
     }
-  }, [search, selectedCategories, selectedMonth, userId]);
+  }, [userId]);
+
+  const filteredContacts = contacts.filter(contact => {
+    const searchMatch = contact.fullName.toLowerCase().includes(search.toLowerCase());
+    const categoryMatch =
+      selectedCategories.length === 0 ||
+      selectedCategories.every(catId => contact.categoryIds.includes(catId));
+    const monthMatch =
+      !selectedMonth ||
+      (contact.birthday && new Date(contact.birthday).getMonth() === parseInt(selectedMonth, 10) - 1);
+    return searchMatch && categoryMatch && monthMatch;
+  });
 
   const fetchCategories = useCallback(async () => {
+    if (!userId) return;
     try {
       const response = await fetch(`/api/categories?userId=${userId}`);
       if (response.ok) {
@@ -70,8 +91,10 @@ export function ContactList() {
   }, [userId]);
 
   useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+    if (userId) {
+      fetchCategories();
+    }
+  }, [userId, fetchCategories]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -82,7 +105,7 @@ export function ContactList() {
   }, [fetchContacts]);
 
   const handleAddCategory = async () => {
-    if (!newCategoryName.trim()) return;
+    if (!newCategoryName.trim() || !userId) return;
 
     try {
       const response = await fetch('/api/categories', {
@@ -181,7 +204,7 @@ export function ContactList() {
 
       {/* Contact List */}
       <div className="grid gap-4">
-        {contacts.map(contact => (
+        {filteredContacts.map(contact => (
           <Card key={contact.id}>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
@@ -210,7 +233,7 @@ export function ContactList() {
             </CardContent>
           </Card>
         ))}
-        {contacts.length === 0 && (
+        {filteredContacts.length === 0 && (
           <p className="text-center text-muted-foreground">No contacts found</p>
         )}
       </div>
