@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { getGoogleOAuthClient } from '@/lib/google-oauth';
 import { normalizePeopleConnection, NormalizedContact } from '@/lib/contacts-import';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/lib/supabase/server';
 import { db } from '@/lib/db';
 
 export const runtime = 'nodejs';
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   if (!code) return new Response('Missing authorization code', { status: 400 });
   if (!state || state !== stateCookie) return new Response('Invalid OAuth state', { status: 400 });
 
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+  const supabase = createClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();
