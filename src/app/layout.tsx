@@ -1,19 +1,19 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Poppins, Montserrat, Nunito, Lora, Playfair_Display, Merriweather, DM_Serif_Display, Caveat } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const poppins = Poppins({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-poppins" });
+const montserrat = Montserrat({ subsets: ["latin"], variable: "--font-montserrat" });
+const nunito = Nunito({ subsets: ["latin"], variable: "--font-nunito" });
+const lora = Lora({ subsets: ["latin"], variable: "--font-lora" });
+const playfairDisplay = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair-display" });
+const merriweather = Merriweather({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-merriweather" });
+const dmSerifDisplay = DM_Serif_Display({ subsets: ["latin"], weight: "400", variable: "--font-dm-serif-display" });
+const caveat = Caveat({ subsets: ["latin"], variable: "--font-caveat" });
 
 export const metadata: Metadata = {
   title: "Z.ai Code Scaffold - AI-Powered Development",
@@ -42,7 +42,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+        className={`${inter.variable} ${poppins.variable} ${montserrat.variable} ${nunito.variable} ${lora.variable} ${playfairDisplay.variable} ${merriweather.variable} ${dmSerifDisplay.variable} ${caveat.variable} antialiased bg-background text-foreground`}
       >
         <Header />
         {children}

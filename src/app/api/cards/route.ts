@@ -1,89 +1,45 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { z } from 'zod';
 
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
-    const contactId = searchParams.get('contactId')
+const Body = z.object({
+  message: z.string().min(1).max(500),
+  styles: z.object({
+    backgroundColor: z.string().regex(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i),
+    textColor: z.string().regex(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i),
+    fontFamily: z.enum(['system','inter','poppins','montserrat','nunito','lora','playfair','merriweather','dmserif','caveat']),
+    fontSize: z.number().int().min(10).max(96),
+    textAlign: z.enum(['left','center','right']).optional()
+  }),
+  media: z.object({
+    imageUrl: z.string().url().optional(),
+    layout: z.enum(['square','portrait','landscape']).optional()
+  }).optional(),
+  meta: z.object({
+    occasion: z.string().optional(),
+    audience: z.string().optional(),
+    tags: z.array(z.string()).max(10).optional()
+  }).optional()
+});
 
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'User ID is required' },
-        { status: 400 }
-      )
-    }
+export async function POST(req: Request) {
+  const supabase = createRouteHandlerClient({ cookies });
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const whereClause: any = { user_id: userId }
-    if (contactId) {
-      whereClause.contact_id = parseInt(contactId)
-    }
-
-    const cards = await db.card.findMany({
-      where: whereClause,
-      include: {
-        contact: true,
-        card_designs: true
-      },
-      orderBy: { created_at: 'desc' }
-    })
-
-    return NextResponse.json(cards)
-  } catch (error) {
-    console.error('Error fetching cards:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch cards' },
-      { status: 500 }
-    )
+  const json = await req.json();
+  const parsed = Body.safeParse(json);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
-}
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json()
-    const {
-      userId,
-      contactId,
-      title,
-      message,
-      template,
-      backgroundStyle,
-      textStyle,
-      elements,
-      status
-    } = body
+  const payload = parsed.data;
+  // Persist (replace with real DB insert)
+  const id = crypto.randomUUID();
+  const createdAt = new Date().toISOString();
+  // Example Supabase insert:
+  // await supabase.from('cards').insert({ id, user_id: user.id, ...payload });
 
-    if (!userId || !title || !message || !template) {
-      return NextResponse.json(
-        { error: 'User ID, title, message, and template are required' },
-        { status: 400 }
-      )
-    }
-
-    const card = await db.card.create({
-      data: {
-        user_id: userId,
-        contact_id: contactId ? parseInt(contactId) : null,
-        title,
-        message,
-        template,
-        background_style: backgroundStyle || 'default',
-        text_style: textStyle || 'default',
-        elements: elements || [],
-        status: status || 'draft'
-      },
-      include: {
-        contact: true,
-        card_designs: true
-      }
-    })
-
-    return NextResponse.json(card, { status: 201 })
-  } catch (error) {
-    console.error('Error creating card:', error)
-    return NextResponse.json(
-      { error: 'Failed to create card' },
-      { status: 500 }
-    )
-  }
+  return NextResponse.json({ id, slug: `card_${id.slice(0,6)}`, createdAt }, { status: 201 });
 }
