@@ -8,7 +8,7 @@ type NavItem = { href: string; label: string };
 
 const BASE_ITEMS: NavItem[] = [
   { href: "/", label: "Home" },
-  { href: "/generator", label: "Card Maker" },
+  { href: "/generator/simple", label: "Card Maker" },
   { href: "/automation", label: "Send Gifts Automatically" },
   { href: "/party-planner", label: "Party Planner" },
   { href: "/gift-guide", label: "Personalized Gifts" },

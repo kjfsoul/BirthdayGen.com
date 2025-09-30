@@ -1,5 +1,4 @@
-# 🚀 Welcome to Z.ai Code Scaffold
-# 🎉 BirthdayGen
+# 🚀 Welcome to 🎉 BirthdayGen
 
 A modern Next.js (App Router) + TypeScript + Tailwind + shadcn/ui app for creating and automating personalized celebration cards. Backend is **Supabase Postgres** with **Prisma** as the ORM; auth is **Supabase Auth**. This README is optimized for rapid onboarding and LLM handoff. Need to do this for an update. changes
 
