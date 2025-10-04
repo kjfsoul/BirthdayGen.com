@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { db } from '@/lib/db';
 
 const Body = z.object({
   message: z.string().min(1).max(500),
@@ -23,8 +23,8 @@ const Body = z.object({
   }).optional()
 });
 
-export async function POST(req: Request) {
-  const supabase = createRouteHandlerClient({ cookies });
+export async function POST(req: NextRequest) {
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -35,11 +35,33 @@ export async function POST(req: Request) {
   }
 
   const payload = parsed.data;
-  // Persist (replace with real DB insert)
-  const id = crypto.randomUUID();
-  const createdAt = new Date().toISOString();
-  // Example Supabase insert:
-  // await supabase.from('cards').insert({ id, user_id: user.id, ...payload });
 
-  return NextResponse.json({ id, slug: `card_${id.slice(0,6)}`, createdAt }, { status: 201 });
+  // Map the payload to database schema
+  const cardData = {
+    user_id: user.id,
+    title: `Card - ${new Date().toLocaleDateString()}`,
+    message: payload.message,
+    template: 'simple', // Using simple template
+    background_style: JSON.stringify({
+      backgroundColor: payload.styles.backgroundColor,
+      textColor: payload.styles.textColor,
+    }),
+    text_style: JSON.stringify({
+      fontFamily: payload.styles.fontFamily,
+      fontSize: payload.styles.fontSize,
+      textAlign: payload.styles.textAlign,
+    }),
+    status: 'draft',
+  };
+
+  // Save to database
+  const savedCard = await db.card.create({
+    data: cardData,
+  });
+
+  return NextResponse.json({
+    id: savedCard.id,
+    slug: `card_${savedCard.id}`,
+    createdAt: savedCard.created_at
+  }, { status: 201 });
 }

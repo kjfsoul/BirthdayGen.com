@@ -41,12 +41,30 @@ export default function AuthPage() {
   }
 
   const handleGoogleSignIn = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${location.origin}/auth/callback`,
-      },
-    })
+    try {
+      console.log('Attempting Google OAuth with redirect to:', `${window.location.origin}/auth/callback`)
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
+        },
+      })
+
+      if (error) {
+        console.error('Google OAuth error:', error)
+        setError(`OAuth Error: ${error.message}`)
+      } else {
+        console.log('OAuth initiated successfully:', data)
+      }
+    } catch (err) {
+      console.error('OAuth setup error:', err)
+      setError(`Setup Error: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

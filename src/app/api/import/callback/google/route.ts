@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   if (!code) return new Response('Missing authorization code', { status: 400 });
   if (!state || state !== stateCookie) return new Response('Invalid OAuth state', { status: 400 });
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();

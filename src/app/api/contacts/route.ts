@@ -1,20 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-
+import { createClient } from '@/lib/supabase/server'
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!userId) {
+    if (!user) {
       return NextResponse.json(
-        { error: 'User ID is required' },
-        { status: 400 }
+        { error: 'Unauthorized' },
+        { status: 401 }
       )
     }
 
     const contacts = await db.contact.findMany({
-      where: { userId },
+      where: { userId: user.id },
       include: {
         cards: true,
         gift_recommendations: true
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+ }
 
 export async function POST(request: NextRequest) {
   try {

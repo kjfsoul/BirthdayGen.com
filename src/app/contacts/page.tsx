@@ -57,7 +57,7 @@ function ContactsPageContent() {
   );
 }
 
-export default function ContactsPage() {
+function ContactsPageContentWithSearchParams() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
 
@@ -82,4 +82,12 @@ export default function ContactsPage() {
   }, [searchParams, toast]);
 
   return <ContactsPageContent />;
+}
+
+export default function ContactsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ContactsPageContentWithSearchParams />
+    </Suspense>
+  );
 }
