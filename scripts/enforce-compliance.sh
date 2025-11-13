@@ -81,9 +81,8 @@ fi
 
 echo "✅ File state consistency verified"
 
-# Check 6: Verify ByteRover is not mentioned (provider order enforcement is implicit in hash)
-# Since ByteRover is disabled, it should not appear in the provider order
-# This is enforced by the hash including the session file which has the compliance info
+# Check 6: Verify provider order (localjson,supabase) - enforced via hash
+# Provider order is enforced by the hash including the session file which has the compliance info
 
 echo "✅ Provider order integrity verified via composite hash"
 

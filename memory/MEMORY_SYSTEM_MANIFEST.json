@@ -58,29 +58,21 @@
     "maintenance": "memory-cleanup.sh",
     "integration": "memory-integration.sh"
   },
-  "mcp_servers": {
-    "byterover": {
-      "status": "ready_for_integration",
-      "purpose": "knowledge_storage_retrieval"
-    },
-    "supermemory": {
-      "status": "ready_for_integration",
-      "purpose": "enhanced_memory_capabilities"
-    },
-    "claude_flow": {
-      "status": "ready_for_integration",
-      "purpose": "workflow_management"
-    }
+  "primary_memory_system": {
+    "name": "beads",
+    "status": "active",
+    "purpose": "task_and_issue_tracking",
+    "location": ".beads/issues.jsonl"
   },
   "integration_status": {
     "phase": "2",
-    "status": "ready_for_mcp_integration",
+    "status": "active",
+    "memory_system": "beads",
     "next_steps": [
-      "Connect to byterover-mcp server",
-      "Connect to supermemory-mcp server",
-      "Connect to claude-flow-mcp server",
-      "Test memory sharing protocols",
-      "Validate agent coordination"
+      "Use Beads for all task and issue tracking",
+      "Query bd ready --json at session start",
+      "File issues immediately when discovered",
+      "Update status when starting/stopping work"
     ]
   }
 }

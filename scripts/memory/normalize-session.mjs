@@ -30,24 +30,16 @@ j.compliance = j.compliance || {};
 
 if (typeof j.compliance.provider_order !== "string") {
 
-  j.compliance.provider_order = "localjson,supabase,byterover(optional)";
+  j.compliance.provider_order = "localjson,supabase";
 
 }
 
-if (typeof j.compliance.byterover_enabled !== "boolean") {
-
-  // normalize older "byte_rover_disabled: true" property if present
-
-  if (typeof j.compliance.byte_rover_disabled === "boolean") {
-
-    j.compliance.byterover_enabled = !j.compliance.byte_rover_disabled;
-
-  } else {
-
-    j.compliance.byterover_enabled = false;
-
-  }
-
+// Remove any ByteRover references (legacy)
+if (j.compliance.byterover_enabled !== undefined) {
+  delete j.compliance.byterover_enabled;
+}
+if (j.compliance.byte_rover_disabled !== undefined) {
+  delete j.compliance.byte_rover_disabled;
 }
 
 

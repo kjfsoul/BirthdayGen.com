@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root=$(git rev-parse --show-toplevel)
+worktrees_dir="${repo_root}/worktrees"
+feature_branch="$1"
+base_branch="${2:-main}"
+mode="${3:-feature}"     # optional mode: feature | bugfix | hotfix
+
+if [[ -z "${feature_branch}" ]]; then
+  echo "Usage: $0 <branch-name> [base-branch] [mode]"
+  echo "  mode: feature | bugfix | hotfix (default: feature)"
+  exit 1
+fi
+
+target_path="${worktrees_dir}/${mode}/${feature_branch}"
+echo "📂 Creating worktree for branch \"${feature_branch}\" (base: ${base_branch}) at ${target_path}"
+
+# Ensure worktrees directory exists
+mkdir -p "${worktrees_dir}/${mode}"
+
+# Fetch and cleanup stale worktrees
+git fetch origin
+git worktree prune || true
+
+# Create the new worktree & branch
+git worktree add -b "${feature_branch}" "${target_path}" origin/"${base_branch}"
+cd "${target_path}"
+
+echo "🔧 Running post-setup commands"
+npm install
+npm run tsconfig:paths:sync
+npm run typecheck
+
+echo "✅ Worktree ready at ${target_path}"
+echo "   Branch: ${feature_branch}"

@@ -140,6 +140,35 @@ Use appropriate dependency types:
 
 **This frees context for actual code and implementation details.**
 
+### Recovering Memory / Context
+
+**When user says they forgot context or memory fades:**
+
+**Natural language commands that trigger recovery:**
+- `"I forgot what I was doing"`
+- `"Recover memory"`
+- `"Restore context"`
+- `"What was I working on?"`
+- `"Show me my current work"`
+- `"I lost context"`
+- `"read recover.md"`
+
+**What to do:**
+1. Run `./scripts/recover-context.sh`
+2. Show output to user
+3. Query Beads for current work: `bd list --status in_progress --json`
+4. Display full context: `bd show <id> --json`
+
+**The recovery script shows:**
+- Current in-progress work
+- Full issue details and description
+- Dependency tree
+- Recent completed work
+- Project health
+
+**After recovery, tell user:**
+"Recovered context. Current work is issue [ID]. Full details: [summary]"
+
 ## Multi-Agent Coordination
 
 Because Beads syncs through Git:
@@ -188,15 +217,58 @@ bd ready --json
 
 ## Task Lists Integration
 
-**To convert a tasklist.md file to Beads issues:**
+**Natural language commands for tasklists:**
 
-```bash
-# Convert all unchecked items to Beads issues
-./scripts/tasklist-to-beads.sh tasklist.md
+**Analyze goals/features and generate tasklist (COMPLETE WORKFLOW):**
+- `"Analyze project goals"`
+- `"Analyze goals from [file] and features from [file]"`
+- `"Read through docs and identify all features"`
+- `"Analyze project features from [directory]"`
+- `"Generate task list from goals"`
 
-# Link to a parent issue
-./scripts/tasklist-to-beads.sh tasklist.md bd-42
-```
+**What to do (STEP 1 - DISCOVERY):**
+1. Read user-specified files/directories OR auto-detect common files:
+   - Goals: README.md, CURRENT_GOALS.txt, GOALS.md, PRD.md, docs/GOALS.md, docs/FEATURES.md
+   - Features: FEATURES.md, FEATURE_LIST.md, docs/FEATURES.md, package.json
+   - Codebase: Scan src/, docs/, README.md for implemented features
+2. Compare documented goals vs implemented features in codebase
+3. Identify gaps (documented but not implemented)
+4. Generate tasklist.md with:
+   - Current features (already implemented)
+   - Missing features (documented but not implemented)
+   - Suggested features (based on codebase patterns)
+
+**What to do (STEP 2 - VERIFICATION):**
+1. Run `./scripts/verify-tasks.sh tasklist.md` to show user
+2. Display all features found (current + missing)
+3. **WAIT for user confirmation** - Ask: "Are these features correct?"
+4. Allow user to approve/modify the list
+
+**What to do (STEP 3 - UPDATE):**
+- If user says "Add [feature]" → Update tasklist.md
+- If user says "Remove [feature]" → Update tasklist.md
+- If user approves → Proceed to conversion
+
+**Convert tasklist to Beads:**
+- `"Convert tasklist to Beads"`
+- `"Process tasklist.md"`
+- `"Create Beads issues from tasklist"`
+- `"Convert tasks to Beads issues"`
+
+**What to do:**
+1. Run `./scripts/tasklist-to-beads.sh tasklist.md`
+2. Optionally link to parent: `./scripts/tasklist-to-beads.sh tasklist.md bd-42`
+3. Verify issues created: `bd list --json`
+
+**Verify tasks before converting:**
+- `"Verify tasks"`
+- `"Show me the task list"`
+- `"Review tasks before converting"`
+
+**What to do:**
+1. Run `./scripts/verify-tasks.sh tasklist.md`
+2. Show user all tasks from tasklist.md
+3. Wait for confirmation
 
 **When working with task lists:**
 - Read `tasklist.md` and convert unchecked items to Beads issues
@@ -238,6 +310,24 @@ bd ready --json
 3. Run `./scripts/verify-tasks.sh tasklist.md` to show user
 4. Wait for user confirmation before converting to Beads
 5. Convert with `./scripts/tasklist-to-beads.sh tasklist.md`
+
+## Secret Detection
+
+**To check for secrets in codebase:**
+
+```bash
+# Check for secrets
+./scripts/check-secrets.sh
+
+# Attempt automatic fixes
+./scripts/check-secrets.sh --fix
+```
+
+**When user asks about secrets/security:**
+- Run `./scripts/check-secrets.sh` to scan codebase
+- Check for hardcoded API keys, tokens, passwords
+- Replace with environment variables
+- Secrets are automatically checked in code quality gates
 
 ## Enforcement
 

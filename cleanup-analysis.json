@@ -1,0 +1,432 @@
+{
+  "analysis_date": "2025-11-04",
+  "repository": "BirthdayGen.com",
+  "total_files": 236,
+  "total_size_mb": 2.96,
+  "file_categories": {
+    "source_code": {
+      "description": "Application source code",
+      "paths": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "src/**/*.js",
+        "src/**/*.jsx"
+      ],
+      "count": 0,
+      "examples": [
+        "src/app/",
+        "src/components/",
+        "src/lib/",
+        "src/hooks/",
+        "src/config/"
+      ]
+    },
+    "configuration": {
+      "description": "Build, tooling, and project configuration",
+      "paths": [
+        "*.json",
+        "*.config.*",
+        "*.tsconfig.*",
+        "package.json",
+        "pnpm-lock.yaml",
+        "package-lock.json",
+        ".env*",
+        "tsconfig*.json",
+        "next.config.ts",
+        "tailwind.config.ts",
+        "postcss.config.mjs",
+        "eslint.config.mjs",
+        "components.json"
+      ],
+      "count": 0,
+      "examples": [
+        "package.json",
+        "tsconfig.json",
+        "next.config.ts",
+        "tailwind.config.ts",
+        ".beads/config.yaml"
+      ]
+    },
+    "documentation": {
+      "description": "Markdown documentation and guides",
+      "paths": [
+        "*.md",
+        "docs/**/*.md",
+        "README.md"
+      ],
+      "count": 0,
+      "examples": [
+        "README.md",
+        "cleanup-plan.md",
+        "MEMORY_PROCEDURES.md",
+        "docs/AGENT_PROTOCOL.md",
+        "docs/TRIPLE_SYSTEM_IMPLEMENTATION_GUIDE.md"
+      ]
+    },
+    "scripts": {
+      "description": "Automation and utility scripts",
+      "paths": [
+        "scripts/**/*.sh",
+        "scripts/**/*.mjs",
+        "scripts/**/*.js",
+        "*.sh"
+      ],
+      "count": 0,
+      "examples": [
+        "scripts/cleanup-repo.sh",
+        "scripts/check-secrets.sh",
+        "scripts/memory/normalize-session.mjs",
+        "extract_codebase.sh",
+        "extract_full_codebase.sh"
+      ]
+    },
+    "assets": {
+      "description": "Static assets and media files",
+      "paths": [
+        "public/**/*",
+        "*.ico",
+        "*.svg",
+        "*.png",
+        "*.jpg",
+        "*.jpeg",
+        "*.gif"
+      ],
+      "count": 0,
+      "examples": [
+        "public/logo.svg",
+        "public/robots.txt",
+        "src/app/favicon.ico"
+      ]
+    },
+    "database": {
+      "description": "Database schemas and migrations",
+      "paths": [
+        "prisma/**/*",
+        "supabase/**/*"
+      ],
+      "count": 0,
+      "examples": [
+        "prisma/schema.prisma",
+        "prisma/seed.ts"
+      ]
+    },
+    "temporary": {
+      "description": "Temporary files, logs, and runtime artifacts",
+      "paths": [
+        "*.log",
+        "*.tmp",
+        ".DS_Store",
+        "*.lock",
+        "*.pid",
+        ".beads/*.db*",
+        "dev.log",
+        "server.log"
+      ],
+      "count": 0,
+      "examples": [
+        "dev.log",
+        "server.log",
+        ".beads/daemon.log",
+        ".beads/daemon.pid",
+        ".beads/beads.db-shm",
+        ".beads/beads.db-wal"
+      ]
+    },
+    "binary_docs": {
+      "description": "Binary documentation files (PDF, DOCX, ZIP)",
+      "paths": [
+        "*.pdf",
+        "*.docx",
+        "*.zip",
+        "docs/**/*.pdf"
+      ],
+      "count": 0,
+      "examples": [
+        "BirthdayGen Project Documentation_ Comprehensive Overview & Development Plan.pdf",
+        "prompts/agent/*.docx",
+        "prompts/agent.zip",
+        "docs/FRD.pdf",
+        "docs/PFD.pdf",
+        "docs/Agent_Directive.pdf"
+      ]
+    },
+    "security_risks": {
+      "description": "Files that pose security risks",
+      "paths": [
+        "codebase_content.txt",
+        "complete_codebase.txt",
+        ".env.local"
+      ],
+      "count": 0,
+      "examples": [
+        "codebase_content.txt",
+        "complete_codebase.txt"
+      ]
+    }
+  },
+  "file_relationships": {
+    "imports": {
+      "description": "Source code import relationships",
+      "patterns": [
+        "src/** imports from src/**",
+        "src/** imports from lib/**",
+        "src/** imports from components/**"
+      ],
+      "key_dependencies": {
+        "src/app": ["src/components", "src/lib", "src/hooks"],
+        "src/components": ["src/lib"],
+        "src/lib": []
+      }
+    },
+    "config_references": {
+      "description": "Configuration file relationships",
+      "relationships": [
+        "package.json → tsconfig.json",
+        "package.json → next.config.ts",
+        "next.config.ts → tailwind.config.ts",
+        "next.config.ts → postcss.config.mjs",
+        "components.json → src/components"
+      ]
+    },
+    "documentation_references": {
+      "description": "Cross-references between documentation files",
+      "relationships": [
+        "README.md → docs/**",
+        "MEMORY_PROCEDURES.md → docs/**",
+        "cleanup-plan.md → freshness-report.md",
+        "cleanup-plan.md → redundancy-map.json",
+        "cleanup-plan.md → bloat-analysis.md",
+        "docs/TRIPLE_SYSTEM_IMPLEMENTATION_GUIDE.md → docs/TRIPLE_SYSTEM_SUMMARY.md",
+        "docs/TRIPLE_SYSTEM_IMPLEMENTATION_GUIDE.md → docs/TRIPLE_SYSTEM_INDEX.md"
+      ]
+    },
+    "script_dependencies": {
+      "description": "Scripts and their dependencies",
+      "relationships": [
+        "scripts/memory/normalize-session.mjs → memory/persistent/session-template.json",
+        "scripts/memory/validate-session.mjs → memory/persistent/session-*.json",
+        "scripts/cleanup-repo.sh → (reads various files)",
+        "scripts/check-secrets.sh → (scans codebase)"
+      ]
+    }
+  },
+  "dependency_graph": {
+    "root": {
+      "package.json": {
+        "depends_on": [],
+        "used_by": ["pnpm-lock.yaml", "package-lock.json", "next.config.ts"]
+      },
+      "next.config.ts": {
+        "depends_on": ["package.json", "tsconfig.json"],
+        "used_by": ["src/app/**"]
+      },
+      "tsconfig.json": {
+        "depends_on": ["package.json"],
+        "used_by": ["next.config.ts", "tsconfig.build.json"]
+      },
+      "prisma/schema.prisma": {
+        "depends_on": [],
+        "used_by": ["prisma/seed.ts", "src/lib/** (Prisma client)"]
+      }
+    },
+    "documentation_hub": {
+      "README.md": {
+        "depends_on": [],
+        "used_by": ["docs/**", "setup.md", "SETUP_COMPLETE.md"]
+      },
+      "cleanup-plan.md": {
+        "depends_on": ["freshness-report.md", "redundancy-map.json", "bloat-analysis.md"],
+        "used_by": []
+      }
+    }
+  },
+  "orphan_files": {
+    "description": "Files with no incoming references (potential cleanup candidates)",
+    "candidates": [
+      {
+        "file": "codebase_content.txt",
+        "reason": "Security risk - extracted codebase snapshot",
+        "action": "DELETE",
+        "priority": "CRITICAL"
+      },
+      {
+        "file": "complete_codebase.txt",
+        "reason": "Security risk - extracted codebase snapshot",
+        "action": "DELETE",
+        "priority": "CRITICAL"
+      },
+      {
+        "file": "backend_files.txt",
+        "reason": "Empty file (0 bytes)",
+        "action": "DELETE",
+        "priority": "LOW"
+      },
+      {
+        "file": "extract_backend_here.sh",
+        "reason": "Development utility script - not needed in production",
+        "action": "MOVE to scripts/extract/ or DELETE",
+        "priority": "MEDIUM"
+      },
+      {
+        "file": "extract_codebase.sh",
+        "reason": "Development utility script - not needed in production",
+        "action": "MOVE to scripts/extract/ or DELETE",
+        "priority": "MEDIUM"
+      },
+      {
+        "file": "extract_full_codebase.sh",
+        "reason": "Development utility script - not needed in production",
+        "action": "MOVE to scripts/extract/ or DELETE",
+        "priority": "MEDIUM"
+      },
+      {
+        "file": "extract_simple.sh",
+        "reason": "Development utility script - not needed in production",
+        "action": "MOVE to scripts/extract/ or DELETE",
+        "priority": "MEDIUM"
+      },
+      {
+        "file": "prompts/agent.zip",
+        "reason": "Archive file - contents should be extracted or deleted",
+        "action": "DELETE after extracting useful content",
+        "priority": "HIGH"
+      },
+      {
+        "file": "prompts/agent/*.docx",
+        "reason": "Binary documentation - should be converted to Markdown",
+        "action": "CONVERT to Markdown or DELETE",
+        "priority": "MEDIUM"
+      },
+      {
+        "file": "dev.log",
+        "reason": "Runtime log file - should not be committed",
+        "action": "DELETE and add to .gitignore",
+        "priority": "MEDIUM"
+      },
+      {
+        "file": "server.log",
+        "reason": "Runtime log file - should not be committed",
+        "action": "DELETE and add to .gitignore",
+        "priority": "MEDIUM"
+      },
+      {
+        "file": ".beads/daemon.log",
+        "reason": "Runtime log file - should not be committed",
+        "action": "DELETE and add to .gitignore",
+        "priority": "MEDIUM"
+      },
+      {
+        "file": ".beads/daemon.pid",
+        "reason": "Runtime PID file - should not be committed",
+        "action": "DELETE and add to .gitignore",
+        "priority": "MEDIUM"
+      },
+      {
+        "file": ".beads/beads.db-shm",
+        "reason": "SQLite shared memory - should not be committed",
+        "action": "DELETE (already in .gitignore)",
+        "priority": "LOW"
+      },
+      {
+        "file": ".beads/beads.db-wal",
+        "reason": "SQLite WAL file - should not be committed",
+        "action": "DELETE (already in .gitignore)",
+        "priority": "LOW"
+      },
+      {
+        "file": "package-lock.json",
+        "reason": "Duplicate package manager lock file (using pnpm)",
+        "action": "DELETE after verifying pnpm works",
+        "priority": "HIGH"
+      }
+    ]
+  },
+  "large_files": {
+    "description": "Files larger than 100KB",
+    "files": [
+      {
+        "file": "package-lock.json",
+        "size_kb": 613,
+        "action": "DELETE (use pnpm-lock.yaml instead)",
+        "priority": "HIGH"
+      },
+      {
+        "file": "pnpm-lock.yaml",
+        "size_kb": 360,
+        "action": "KEEP (primary package manager)",
+        "priority": "N/A"
+      },
+      {
+        "file": "BirthdayGen Project Documentation_ Comprehensive Overview & Development Plan.pdf",
+        "size_kb": 352,
+        "action": "CONVERT to Markdown or ARCHIVE",
+        "priority": "MEDIUM"
+      },
+      {
+        "file": "prompts/agent.zip",
+        "size_kb": 334,
+        "action": "DELETE after extracting useful content",
+        "priority": "HIGH"
+      },
+      {
+        "file": "src/app/favicon.ico",
+        "size_kb": 66,
+        "action": "OPTIMIZE to <10KB",
+        "priority": "MEDIUM"
+      }
+    ]
+  },
+  "redundancy_clusters": {
+    "documentation": [
+      {
+        "cluster": "Setup documentation",
+        "files": ["setup.md", "SETUP_COMPLETE.md", "README.md (setup sections)"],
+        "action": "CONSOLIDATE into single setup guide",
+        "priority": "MEDIUM"
+      },
+      {
+        "cluster": "Triple System documentation",
+        "files": [
+          "docs/TRIPLE_SYSTEM_IMPLEMENTATION_GUIDE.md",
+          "docs/TRIPLE_SYSTEM_SUMMARY.md",
+          "docs/TRIPLE_SYSTEM_INDEX.md",
+          "docs/QUICK_START_TRIPLE_SYSTEM.md"
+        ],
+        "action": "KEEP TRIPLE_SYSTEM_IMPLEMENTATION_GUIDE.md, consolidate others into index",
+        "priority": "MEDIUM"
+      }
+    ],
+    "scripts": [
+      {
+        "cluster": "Extract scripts",
+        "files": [
+          "extract_backend_here.sh",
+          "extract_codebase.sh",
+          "extract_full_codebase.sh",
+          "extract_simple.sh"
+        ],
+        "action": "CONSOLIDATE into scripts/extract/ or DELETE unused",
+        "priority": "MEDIUM"
+      }
+    ]
+  },
+  "recommendations": {
+    "immediate": [
+      "Delete codebase_content.txt and complete_codebase.txt (security risk)",
+      "Remove package-lock.json after verifying pnpm works",
+      "Delete log files (dev.log, server.log, .beads/daemon.log)"
+    ],
+    "short_term": [
+      "Convert DOCX files to Markdown",
+      "Remove prompts/agent.zip",
+      "Optimize favicon.ico",
+      "Consolidate extract scripts",
+      "Consolidate setup documentation"
+    ],
+    "long_term": [
+      "Establish file size limits",
+      "Create cleanup automation",
+      "Set up monitoring for bloat"
+    ]
+  }
+}

@@ -30,12 +30,9 @@
     }
   },
   "memory_system": {
-    "status": "initializing",
+    "status": "active",
     "version": "1.0.0",
-    "mcp_servers": {
-      "byterover": "connected",
-      "supermemory": "connected",
-      "claude_flow": "connected"
-    }
+    "primary_system": "beads",
+    "beads_status": "initialized"
   }
 }

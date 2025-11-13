@@ -40,11 +40,7 @@ for (const k of need) {
 
 }
 
-if (j?.compliance && typeof j.compliance.byterover_enabled !== "boolean") {
-
-  console.error("❌ compliance.byterover_enabled must be boolean"); err++;
-
-}
+// ByteRover is not used - removed validation check
 
 if (err) process.exit(1);
 

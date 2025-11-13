@@ -10,7 +10,6 @@
     "protocol_read": false,
     "proof_hash": "",
     "proof_timestamp": "",
-    "provider_order": "localjson,supabase,byterover(optional)",
-    "byterover_enabled": false
+    "provider_order": "localjson,supabase"
   }
 }

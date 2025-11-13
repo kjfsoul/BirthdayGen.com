@@ -135,12 +135,10 @@ mkdir -p scripts/agents
   },
   "provider_order": [
     "LocalJson",
-    "Supabase",
-    "ByteRover(optional)"
+    "Supabase"
   ],
   "compliance": {
-    "provider_order_verified": true,
-    "byterover_enabled": false
+    "provider_order_verified": true
   }
 }
 ```
@@ -158,8 +156,7 @@ mkdir -p scripts/agents
   "dependencies": {},
   "architecture": {},
   "compliance": {
-    "provider_order": "localjson,supabase,byterover(optional)",
-    "byterover_enabled": false
+    "provider_order": "localjson,supabase"
   }
 }
 ```
@@ -181,8 +178,7 @@ mkdir -p scripts/agents
     "protocol_read": false,
     "proof_hash": "",
     "proof_timestamp": "",
-    "provider_order": "localjson,supabase,byterover(optional)",
-    "byterover_enabled": false
+    "provider_order": "localjson,supabase"
   }
 }
 ```
@@ -213,15 +209,15 @@ j.next = Array.isArray(j.next) ? j.next : [];
 j.compliance = j.compliance || {};
 
 if (typeof j.compliance.provider_order !== "string") {
-  j.compliance.provider_order = "localjson,supabase,byterover(optional)";
+  j.compliance.provider_order = "localjson,supabase";
 }
 
-if (typeof j.compliance.byterover_enabled !== "boolean") {
-  if (typeof j.compliance.byte_rover_disabled === "boolean") {
-    j.compliance.byterover_enabled = !j.compliance.byte_rover_disabled;
-  } else {
-    j.compliance.byterover_enabled = false;
-  }
+// Remove any ByteRover references (legacy)
+if (j.compliance.byterover_enabled !== undefined) {
+  delete j.compliance.byterover_enabled;
+}
+if (j.compliance.byte_rover_disabled !== undefined) {
+  delete j.compliance.byte_rover_disabled;
 }
 
 fs.writeFileSync(f, JSON.stringify(j, null, 2));
@@ -270,10 +266,7 @@ for (const k of need) {
   }
 }
 
-if (j?.compliance && typeof j.compliance.byterover_enabled !== "boolean") {
-  console.error("❌ compliance.byterover_enabled must be boolean");
-  err++;
-}
+// ByteRover is not used - removed validation check
 
 if (err) process.exit(1);
 
@@ -327,13 +320,13 @@ The memory system MUST use providers in this exact order:
 
 1. **LocalJson** - Local JSON files in `memory/` directory (primary)
 2. **Supabase** - Database-backed persistent memory (secondary)
-3. **ByteRover** - Optional MCP server (disabled by default, opt-in only)
+3. **Beads** - Task and issue tracking system (`.beads/issues.jsonl`) - PRIMARY for tasks/issues
 
 ### Critical Rules
 
-- ByteRover MUST remain **disabled** unless explicitly enabled by user
-- Provider order MUST be: LocalJson → Supabase → ByteRover(optional)
-- Never skip LocalJson or Supabase in favor of ByteRover
+- Provider order MUST be: LocalJson → Supabase
+- Beads (`.beads`) is the PRIMARY memory system for tasks and issues
+- Never use ByteRover - it is not part of this system
 - All memory operations MUST respect this hierarchy
 
 ## Session Compliance Requirements
@@ -364,8 +357,7 @@ All session files MUST match this schema:
     "protocol_read": true,
     "proof_hash": "SHA256_HASH",
     "proof_timestamp": "ISO8601_TIMESTAMP",
-    "provider_order": "localjson,supabase,byterover(optional)",
-    "byterover_enabled": false
+    "provider_order": "localjson,supabase"
   }
 }
 \`\`\`
@@ -634,8 +626,7 @@ jq --arg hash "$PROOF_HASH" \
    '.compliance.protocol_read = true |
     .compliance.proof_hash = $hash |
     .compliance.proof_timestamp = $timestamp |
-    .compliance.provider_order = "localjson,supabase,byterover(optional)" |
-    .compliance.byterover_enabled = false' \
+    .compliance.provider_order = "localjson,supabase"' \
    "memory/persistent/session-$TODAY.json" > tmp.json && mv tmp.json "memory/persistent/session-$TODAY.json"
 
 # Normalize
