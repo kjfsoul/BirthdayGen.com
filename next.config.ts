@@ -25,23 +25,6 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  // Don't optimize away dynamic features
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      // Keep all dynamic imports and server features
-      config.externals = [...(config.externals || [])];
-    }
-
-    // Add webpack config to help with module resolution
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
-      fs: false,
-      net: false,
-      tls: false,
-    };
-
-    return config;
-  },
 };
 
 export default nextConfig;

@@ -7,7 +7,7 @@
 
 ## Overview
 
-The Mystic Arcana project uses a multi-layered memory system for knowledge persistence, session management, and agent coordination. The primary memory system is **Beads** (`.beads`), which solves the agent amnesia problem by storing all tasks, issues, and discoveries outside of context windows.
+The BirthdayGen.com project uses a multi-layered memory system for knowledge persistence, session management, and agent coordination. The primary memory system is **Beads** (`.beads`), which solves the agent amnesia problem by storing all tasks, issues, and discoveries outside of context windows.
 
 ---
 
