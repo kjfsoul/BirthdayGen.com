@@ -118,7 +118,7 @@ importers:
         version: 8.18.0(@types/react@18.3.27)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(three@0.166.1)
       '@reactuses/core':
         specifier: ^6.0.5
-        version: 6.1.5(react@18.3.1)
+        version: 6.1.6(react@18.3.1)
       '@supabase/ssr':
         specifier: ^0.7.0
         version: 0.7.0(@supabase/supabase-js@2.84.0)
@@ -2537,8 +2537,8 @@ packages:
       react-native:
         optional: true
 
-  '@reactuses/core@6.1.5':
-    resolution: {integrity: sha512-9G5a/cdcFSIoSu3lw8xdJqbAgQmbyRjAC78HU+Unh/KYgsWOfpM4flodSL/rrsKhuyZXHBIU9Qf7yG5vCtENVA==}
+  '@reactuses/core@6.1.6':
+    resolution: {integrity: sha512-nRv/jNsv1MwYw6CMYNuYORgcHKzzcOe2JU6iizT039NoshJxvauPVjiTK9hZH1zUvdhj2/lfDqcucPlOQ72G8Q==}
     peerDependencies:
       qrcode: ^1.5
       react: ^16.8.0  || ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -10009,7 +10009,7 @@ snapshots:
     transitivePeerDependencies:
       - '@types/react'
 
-  '@reactuses/core@6.1.5(react@18.3.1)':
+  '@reactuses/core@6.1.6(react@18.3.1)':
     dependencies:
       '@microsoft/fetch-event-source': 2.0.1
       '@testing-library/dom': 10.4.1
