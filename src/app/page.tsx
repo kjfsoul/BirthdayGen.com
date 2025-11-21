@@ -24,6 +24,7 @@ import { NewsletterSignup } from './components/NewsletterSignup'
 import { trackEvent } from '@/lib/analytics'
 import dynamic from "next/dynamic";
 
+const HolidayScene = dynamic(() => import("../components/holiday/HolidayScene").then(mod => mod.HolidayScene), { ssr: false });
 const AddContactsCTA = dynamic(() => import("../components/contacts/AddContactsCTA"));
 
 export default function Home() {
@@ -98,16 +99,18 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Button size="lg" className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white text-lg px-8 py-4">
-              <Wand2 className="h-5 w-5 mr-2" />
-              Sign up free
+            <Button size="lg" className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white text-lg px-8 py-4" asChild>
+              <Link href="/auth">
+                <Wand2 className="h-5 w-5 mr-2" />
+                Sign up free
+              </Link>
             </Button>
-            <Link href="/blog?tag=holiday">
-              <Button size="lg" variant="outline" className="text-lg px-8 py-4 border-purple-300 text-purple-600 hover:bg-purple-50">
+            <Button size="lg" variant="outline" className="text-lg px-8 py-4 border-purple-300 text-purple-600 hover:bg-purple-50" asChild>
+              <Link href="/blog?tag=holiday">
                 <Search className="h-5 w-5 mr-2" />
                 Explore ideas
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
 
           {/* Stats */}
@@ -125,9 +128,9 @@ export default function Home() {
         </div>
       </section>
 
-     <AddContactsCTA />
+      <AddContactsCTA />
 
-     {/* Add Contacts CTA */}
+      {/* Add Contacts CTA */}
       <section className="py-16 px-4 bg-white">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">

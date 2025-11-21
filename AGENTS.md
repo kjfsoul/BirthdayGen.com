@@ -1,319 +1,267 @@
-# Agent Instructions
+AGENTS.md — BirthdayGen Operating Doctrine
 
-## Issue Tracking with Beads (bd)
+(Unified Memory + Compliance + Beads Discipline System)
 
-Use the `bd` command-line tool for ALL task and issue management instead of markdown files.
+🔱 0. Purpose
 
-### 🚨 MANDATORY: Session Startup Workflow
+This document defines exactly how every agent must behave, including:
 
-**At the start of EVERY session, you MUST:**
+Memory usage
 
-1. **Check available work**:
+Session discipline
 
-   ```bash
-   bd ready --json
-   ```
+Beads issue workflow
 
-2. **Review project health**:
+Compliance requirements
 
-   ```bash
-   bd stats
-   ```
+Task selection
 
-3. **Check blocked issues**:
+Context recovery
 
-   ```bash
-   bd blocked --json
-   ```
+Communication style + decision-making rules
 
-4. **Select work from ready issues** - Always start with unblocked work
+This file overrides all others for operational behavior.
 
-### Core Workflow
+Agents must treat this file as LAW.
 
-#### 1. **Finding Work**
+🔱 1. Mandatory Session Startup
 
-- `bd ready --json` - Get issues with no blockers (START HERE)
-- `bd list --json` - See all issues
-- `bd blocked --json` - Issues that need attention
-- `bd stats` - Project overview
+At the beginning of every session:
 
-#### 2. **Creating Issues**
+1.1 Load Triple System Discipline
 
-   ```bash
-   bd create "Issue title" -d "Description" -p 1 -t bug --json
-   ```
+Read:
 
-- Types: `bug`, `feature`, `task`, `epic`, `chore`
-- Priority: `0` (highest) to `4` (lowest)
-- **ALWAYS use `--json` flag** for programmatic access
+MEMORY_PROCEDURES.md
 
-#### 3. **Managing Dependencies**
+TRIPLE_SYSTEM_SUMMARY.md
 
-   ```bash
-   bd dep add <dependent-id> <blocker-id> --type blocks
-   ```
+BEADS_INTEGRATION.md
 
-- Types: `blocks`, `related`, `parent-child`, `discovered-from`
-- Only `blocks` dependencies affect ready work detection
+1.2 Run the integrated startup script
+./scripts/integrated-session-start.sh
 
-#### 4. **Updating Status**
 
-   ```bash
-   bd update <issue-id> --status in_progress --json
-   ```
+This performs:
 
-- Statuses: `open`, `in_progress`, `blocked`, `closed`
-- **Always update status when starting work**
+Memory system initialization
 
-#### 5. **Completing Work**
+Compliance proof validation
 
-   ```bash
-   bd close <issue-id> --reason "Implemented feature X" --json
-   ```
+Beads-ready-work check
 
-- Always provide a reason describing what was accomplished
-- Verify dependencies are resolved before closing
+1.3 Select work ONLY from Beads
+bd ready --json
 
-#### 6. **Discovering New Work**
 
-- Create issue: `bd create "New bug discovered" -t bug -p 0 --json`
-- Link back: `bd dep add <new-id> <parent-id> --type discovered-from`
-- **File issues automatically for problems noticed during work**
+You MUST NOT begin work in any other way.
 
-### During Development Workflow
+🔱 2. Beads Is Source of Truth (Primary Work Memory)
 
-**As you work, you MUST:**
+Beads governs all tasks.
+Agents must obey these rules at all times:
 
-1. **Update status when starting**: `bd update <id> --status in_progress --json`
+2.1 Selecting work
 
-2. **Create issues for discovered problems**:
+Only work on ready issues
 
-   ```bash
-   bd create "Bug found: <description>" -t bug -p 0 --json
-   ```
+Never start a blocked issue
 
-3. **Link new issues to parent work**:
+Never pick issues outside Beads
 
-   ```bash
-   bd dep add <new-id> <parent-id> --type discovered-from
-   ```
+2.2 Starting work
+bd update <id> --status in_progress --json
+bd show <id> --json
 
-4. **Add labels for organization**:
+2.3 Discovered issues
+NEW=$(bd create "Bug: <desc>" -t bug -p 0 --json)
+bd dep add $NEW <current-id> --type discovered-from
 
-   ```bash
-   bd label add <id> backend,urgent
-   ```
+2.4 Completing work
+bd close <id> --reason "<what was done + verification>" --json
+bd ready --json
 
-5. **Query issue details when needed**:
+2.5 Context recovery
 
-   ```bash
-   bd show <id> --json
-   ```
+If context is lost or forgotten:
 
-### Completing Work Workflow
+./scripts/recover-context.sh
+bd list --status in_progress --json
 
-**To properly close out tasks:**
+🔱 3. Memory Discipline (From MEMORY_PROCEDURES.md)
 
-1. **Close with description**:
+Agents must:
 
-   ```bash
-   bd close <id> --reason "Implemented feature X with tests" --json
-   ```
+Use memory/persistent/session-YYYY-MM-DD.json
 
-2. **Verify dependencies are resolved** - Check if any blocked issues are now ready
+Update accomplishments
 
-3. **Update related issues** - If completing work unblocks other issues, note it
+Track current tasks
 
-### Critical Guidelines for Agents
+Maintain today’s session file
 
-**Agents using Beads MUST:**
+Never store tasks in context
 
-- ✅ **ALWAYS use `--json` flag** for programmatic access
-- ✅ **File issues instead of storing plans in context** - solves amnesia problem
-- ✅ **Use dependency tracking** for complex task chains
-- ✅ **Keep descriptions clear and actionable**
-- ✅ **Automatically file issues** for problems noticed during work
-- ✅ **Query ready work at start of each session**
-- ✅ **Link discovered work back to parent issues** for audit trail
+Never rely on LLM memory over Beads
 
-### Dependency System
+Hierarchy of memory access (strict)
 
-Beads provides four types of dependencies:
+Beads (tasks/issues + amnesia-proof)
 
-1. **`blocks`**: Hard blocker - issue cannot start until blocker is resolved
+Session files (daily state)
 
-   ```bash
-   bd dep add bd-2 bd-1 --type blocks
-   ```
+Project-state.json (high-level system memory)
 
-2. **`related`**: Soft relationship - issues are connected but not blocking
+Supabase (runtime persistent user data)
 
-   ```bash
-   bd dep add bd-3 bd-2 --type related
-   ```
+ByteRover is forbidden.
 
-3. **`parent-child`**: Hierarchical relationship (child depends on parent)
+🔱 4. Compliance Discipline
 
-   ```bash
-   bd dep add bd-4 bd-3 --type parent-child
-   ```
+Agents must enforce:
 
-4. **`discovered-from`**: Issue discovered during work on another issue
+Protocol adherence
 
-   ```bash
-   bd dep add bd-5 bd-4 --type discovered-from
-   ```
+Proof generation
 
-**Note**: Only `blocks` dependencies affect ready work detection.
+Proof presence in commits
 
-### Visualizing Dependencies
+Required commands:
+npm run proof
+npm run compliance:check
 
-```bash
-# Show full dependency tree
-bd dep tree <id>
 
-# Detect circular dependencies
-bd dep cycles
-```
+No commit is valid without:
 
-### Labels and Filtering
+COMPLIANCE_PROOF: <sha256>
 
-```bash
-# Add labels during creation
-bd create "Fix auth bug" -t bug -p 1 -l auth,backend,urgent --json
+🔱 5. Triple System Command Model
 
-# Add/remove labels
-bd label add <id> security
-bd label remove <id> urgent
+The three systems are unified:
 
-# Filter by labels (AND - must have ALL)
-bd list --label backend,auth --json
+Memory → Compliance → Beads → Git
 
-# Filter by labels (OR - must have AT LEAST ONE)
-bd list --label-any frontend,ui --json
+Rules:
 
-# List all labels with counts
-bd label list-all
-```
+Memory stores state
 
-### Batch Operations
+Compliance verifies memory
 
-```bash
-# Create multiple issues from markdown file
-bd create -f feature-plan.md
+Beads stores tasks/issues
 
-# Close multiple issues at once
-bd close bd-1 bd-2 bd-3 --force --json
-```
+Git persists all three
 
-### Memory Compaction
+Session startup binds them together
 
-Beads uses AI to compress old closed issues:
+Agents must keep all three aligned.
 
-```bash
-# Preview what would be compacted
-bd compact --dry-run --all
+🔱 6. Decision-Making Rules
 
-# Compact closed issues older than 90 days
-bd compact --days 90
-```
+When choosing how to act:
 
-### Quick Reference
+Beads dictates WHAT to do
 
-```bash
-# Session Startup (MANDATORY)
-bd ready --json          # Find work to do
-bd stats                  # Project statistics
-bd blocked --json         # Issues needing attention
+Memory dictates WHERE you are in the system
 
-# Issue Management
-bd create "Title" --json  # Create new issue
-bd show <id> --json       # Get issue details
-bd update <id> --status in_progress --json  # Update status
-bd close <id> --reason "Done" --json  # Close issue
+Compliance dictates WHETHER you may proceed
 
-# Dependencies
-bd dep add <dep> <blocker> --type blocks  # Add dependency
-bd dep tree <id>           # View dependencies
-bd dep cycles              # Detect circular deps
+AGENTS.md dictates HOW you work
 
-# Lists and Filters
-bd list --status open --json      # List open issues
-bd list --label backend --json    # Filter by label
-bd list --label-any frontend,ui --json  # OR filter
-```
+If in conflict:
 
-### Troubleshooting
+AGENTS.md overrides → Beads → Memory → Compliance
 
-**"bd: command not found"**
+🔱 7. Task Execution Principles
 
-- Verify Go bin is in PATH: `echo $PATH`
-- Check bd location: `which bd`
-- Manually add to PATH: `export PATH="$PATH:/Users/kfitz/go/bin"`
+Agents must:
 
-**Permission Denied**
+Work on ONE issue at a time
 
-```bash
-chmod +x /Users/kfitz/go/bin/bd
-```
+Keep descriptions explicit and actionable
 
-**Cursor Agent Not Using bd**
+Never hide work in conversations
 
-- Ensure AGENTS.md exists in project root ✅
-- Verify AGENTS.md contains bd instructions ✅
-- Restart Cursor IDE completely
-- Explicitly tell agent: "Please use bd for all issue tracking"
+Always file new issues for discoveries
 
-### Why Beads Transforms Agent Workflows
+Use semantic reasoning, not superficial cues
 
-Beads solves critical problems with AI coding agents:
+Maintain BirthdayGen quality bars
 
-- **Amnesia Problem**: Agents lose context across sessions. Beads provides persistent memory through its issue tracker.
-- **Lost Work**: Problems agents notice but can't address immediately are often forgotten. With Beads, agents automatically file issues for discovered work.
-- **Context Limits**: Complex plans consume valuable context space. Beads moves planning to a structured database, freeing up context for actual code.
-- **Multi-Agent Coordination**: Multiple agents or machines share the same logical database through Git sync, enabling true distributed development.
-- **Audit Trail**: Every change is logged, allowing reconstruction of complex operations spanning multiple sessions.
+Prioritize system integrity over speed
 
-### Multi-Machine Setup
+🔱 8. BirthdayGen-Specific Requirements
+8.1 Card Generator Principles
 
-Because Beads syncs through Git:
+Templates must follow schema rules (no “pink = template”)
 
-- Install `bd` on each machine
-- Clone the project repo
-- The `.beads/issues.jsonl` file syncs automatically via git
-- Each machine maintains its own local SQLite cache
-- Changes sync bidirectionally through normal git operations
+No hard-coded aesthetic behavior
 
-**Best Practices:**
+JSON-based template definitions
 
-- Always use `--json` flag when agents interact with bd programmatically
-- Install git hooks when prompted during `bd init` - they handle auto-sync
-- Let agents file issues automatically - this is the key to solving amnesia
-- Use appropriate dependency types - `blocks` for hard dependencies, `discovered-from` for new work found during tasks
-- Review `bd stats` regularly to understand project health
-- Commit `.beads/issues.jsonl` but gitignore `.beads/*.db` files
-- Use labels liberally for better organization and filtering
-- Link discovered work back to parent issues for full audit trail
+Semantic fields over colors
 
-**Note:** We use Beads (`.beads`) for all task and issue memory. ByteRover is not used.
+Must respect tasks:
 
-[byterover-mcp]
+Template schema (tmpl-schema)
 
-[byterover-mcp]
+Library (tmpl-library)
 
-You are given two tools from Byterover MCP server, including
-## 1. `byterover-store-knowledge`
-You `MUST` always use this tool when:
+QA guardrails (tmpl-qa)
 
-+ Learning new patterns, APIs, or architectural decisions from the codebase
-+ Encountering error solutions or debugging techniques
-+ Finding reusable code patterns or utility functions
-+ Completing any significant task or plan implementation
+8.2 UX Requirements
 
-## 2. `byterover-retrieve-knowledge`
-You `MUST` always use this tool when:
+Smooth 60fps canvas
 
-+ Starting any new task or implementation to gather relevant context
-+ Before making architectural decisions to understand existing patterns
-+ When debugging issues to check for previous solutions
-+ Working with unfamiliar parts of the codebase
+Mobile-first parity
+
+Consistent rendering
+
+Fully integrated send/auto-populate flow
+
+8.3 Automation Requirements
+
+n8n integration
+
+Scheduled send workflows
+
+Contacts + personalization pipelines
+
+🔱 9. Communication Standards for Agents
+
+Agents must:
+
+Include issue ID when referencing work
+
+Summarize reasoning
+
+Provide step-by-step execution
+
+Keep explanations concise and tactical
+
+Use technical precision
+
+Agents must NOT:
+
+Guess
+
+Skip Beads
+
+Store tasks in context
+
+Change system architecture
+
+🔱 10. Single-Source Commands Summary
+Select work:
+bd ready --json
+
+Start work:
+bd update <id> --status in_progress --json
+
+Discover issue:
+bd create "Bug: ..." -t bug -p 0 --json
+
+Close work:
+bd close <id> --reason "..." --json
+
+Session recovery:
+./scripts/recover-context.sh

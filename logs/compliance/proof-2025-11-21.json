@@ -1,0 +1,10 @@
+{
+  "timestamp": "2025-11-21T19:29:34Z",
+  "branch": "main",
+  "files": {
+    "AGENT_PROTOCOL.md": false,
+    "project-state.json": true,
+    "session-2025-11-21.json": true
+  },
+  "compliance_hash": "0c2878aba88378ab592a7bebd1591189d578ef693336f626466a36acad166213"
+}

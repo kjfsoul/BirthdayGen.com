@@ -62,8 +62,11 @@ function ContactsPageContentWithSearchParams() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const importedCount = searchParams.get('importedCount');
-    const error = searchParams.get('error');
+    if (!searchParams) return;
+
+    const searchParamsObj = new URLSearchParams(searchParams.toString());
+    const importedCount = searchParamsObj.get('importedCount');
+    const error = searchParamsObj.get('error');
 
     if (importedCount) {
       toast({

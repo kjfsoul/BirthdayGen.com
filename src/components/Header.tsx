@@ -48,22 +48,7 @@ export function Header() {
     return () => subscription.unsubscribe()
   }, [])
 
-  const handleSignIn = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`
-      }
-    })
 
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      })
-    }
-  }
 
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut()
@@ -86,11 +71,10 @@ export function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-50 transition-all duration-300 ${
-        isScrolled
-          ? 'bg-white shadow-lg border-b'
-          : 'bg-transparent'
-      }`}
+      className={`sticky top-0 z-50 transition-all duration-300 ${isScrolled
+        ? 'bg-white shadow-lg border-b'
+        : 'bg-transparent'
+        }`}
       role="navigation"
       aria-label="Main navigation"
     >
@@ -110,41 +94,37 @@ export function Header() {
           <nav className="hidden md:flex items-center space-x-8">
             <Link
               href="/generator"
-              className={`text-sm font-medium transition-colors ${
-                isActive('/generator')
-                  ? 'text-purple-600'
-                  : 'text-gray-700 hover:text-purple-600'
-              }`}
+              className={`text-sm font-medium transition-colors ${isActive('/generator')
+                ? 'text-purple-600'
+                : 'text-gray-700 hover:text-purple-600'
+                }`}
             >
               Card Maker
             </Link>
             <Link
               href="/party-planner"
-              className={`text-sm font-medium transition-colors ${
-                isActive('/party-planner')
-                  ? 'text-purple-600'
-                  : 'text-gray-700 hover:text-purple-600'
-              }`}
+              className={`text-sm font-medium transition-colors ${isActive('/party-planner')
+                ? 'text-purple-600'
+                : 'text-gray-700 hover:text-purple-600'
+                }`}
             >
               Party Planner
             </Link>
             <Link
               href="/gifts"
-              className={`text-sm font-medium transition-colors ${
-                isActive('/gifts')
-                  ? 'text-purple-600'
-                  : 'text-gray-700 hover:text-purple-600'
-              }`}
+              className={`text-sm font-medium transition-colors ${isActive('/gifts')
+                ? 'text-purple-600'
+                : 'text-gray-700 hover:text-purple-600'
+                }`}
             >
               Gift Guide
             </Link>
             <Link
               href="/blog"
-              className={`text-sm font-medium transition-colors ${
-                isActive('/blog')
-                  ? 'text-purple-600'
-                  : 'text-gray-700 hover:text-purple-600'
-              }`}
+              className={`text-sm font-medium transition-colors ${isActive('/blog')
+                ? 'text-purple-600'
+                : 'text-gray-700 hover:text-purple-600'
+                }`}
             >
               Blog
             </Link>
@@ -173,12 +153,16 @@ export function Header() {
               </div>
             ) : (
               <>
-                <Button variant="ghost" size="sm" onClick={handleSignIn}>
-                  <User className="h-4 w-4 mr-2" />
-                  Sign in
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/auth">
+                    <User className="h-4 w-4 mr-2" />
+                    Sign in
+                  </Link>
                 </Button>
-                <Button size="sm" className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white" onClick={handleSignIn}>
-                  Sign up free
+                <Button size="sm" className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white" asChild>
+                  <Link href="/auth">
+                    Sign up free
+                  </Link>
                 </Button>
               </>
             )}

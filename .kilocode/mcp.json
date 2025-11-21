@@ -13,7 +13,7 @@
       "args": [
         "mcp-server-git",
         "--repository",
-        "https://github.com/kjfsoul/bdaygen"
+        "https://github.com/kjfsoul/birthdaygen.com"
       ]
     }
   }

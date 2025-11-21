@@ -1,0 +1,350 @@
+---
+trigger: always_on
+---
+
+---
+description: Mandatory Beads (bd) issue tracking integration for all agent work
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# Beads Issue Tracking Integration
+
+## 🚨 MANDATORY PROTOCOL
+
+All agents MUST use Beads (`bd`) for task and issue management. This replaces markdown files, TODOs, and in-context planning.
+
+## Session Startup (REQUIRED)
+
+**Before ANY work, the agent MUST:**
+
+1. Query ready work: `bd ready --json`
+2. Review project health: `bd stats`
+3. Check blocked issues: `bd blocked --json`
+4. Select work from ready issues (never start blocked work)
+
+**Example session start:**
+```bash
+# Check what work is available
+READY_WORK=$(bd ready --json)
+echo "Available work: $READY_WORK"
+
+# Review project status
+bd stats
+
+# Check for blockers
+BLOCKED=$(bd blocked --json)
+if [ -n "$BLOCKED" ]; then
+  echo "⚠️ Blocked issues detected: $BLOCKED"
+fi
+```
+
+## Workflow Rules
+
+### Starting Work
+
+**When beginning ANY task:**
+
+1. **If work comes from Beads**:
+   - Update status: `bd update <id> --status in_progress --json`
+   - Use `bd show <id> --json` to get full context
+
+2. **If work is NEW**:
+   - Create issue first: `bd create "Task title" -d "Description" -p 1 -t task --json`
+   - Then update status: `bd update <id> --status in_progress --json`
+
+### During Development
+
+**As you work, you MUST:**
+
+- **File issues for discovered problems**:
+  ```bash
+  NEW_ISSUE=$(bd create "Bug: <description>" -t bug -p 0 --json)
+  bd dep add <new-id> <parent-id> --type discovered-from
+  ```
+
+- **Add labels for organization**:
+  ```bash
+  bd label add <id> backend,urgent
+  ```
+
+- **Link related work**:
+  ```bash
+  bd dep add <dep-id> <related-id> --type related
+  ```
+
+### Completing Work
+
+**When finishing ANY task:**
+
+1. **Close with reason**:
+   ```bash
+   bd close <id> --reason "Implemented feature X with tests. Verified with npm test." --json
+   ```
+
+2. **Check if dependencies are resolved**:
+   ```bash
+   # Check if closing this unblocks other issues
+   bd ready --json
+   ```
+
+3. **Update related issues** if completing work affects them
+
+## Integration with Protocol Check
+
+**Combine Beads workflow with mandatory protocol check:**
+
+```
+🚨 MANDATORY PROTOCOL CHECK:
+1. AM I ON FEATURE BRANCH? [YES/NO]
+2. DO I HAVE USER APPROVAL? [YES/NO]
+3. AM I DEPLOYING TO STAGING FIRST? [YES/NO]
+4. HAVE I QUERIED BEADS FOR READY WORK? [YES/NO]
+5. HAVE I UPDATED ISSUE STATUS TO IN_PROGRESS? [YES/NO]
+```
+
+## Critical Rules
+
+- ✅ **ALWAYS use `--json` flag** - Required for programmatic access
+- ✅ **File issues instead of storing plans in context** - Solves amnesia problem
+- ✅ **Automatically file issues** for problems noticed during work
+- ✅ **Link discovered work** back to parent issues with `discovered-from`
+- ✅ **Never start blocked work** - Always check `bd ready --json` first
+- ✅ **Update status immediately** when starting/stopping work
+- ✅ **Close with detailed reasons** - Include what was accomplished and how it was verified
+
+## Dependency Types
+
+Use appropriate dependency types:
+
+- **`blocks`**: Hard blocker - work cannot start until blocker resolved
+- **`related`**: Soft relationship - issues connected but not blocking
+- **`parent-child`**: Hierarchical relationship
+- **`discovered-from`**: Issue discovered during work on another issue
+
+## Error Handling
+
+**If `bd` command fails:**
+
+1. Check if `bd` is installed: `which bd`
+2. Verify PATH includes Go bin: `echo $PATH | grep go/bin`
+3. Check `.beads/` directory exists
+4. If `bd` unavailable, **document the work that should be filed** and file it when `bd` is available
+
+**Never skip Beads workflow** - If `bd` is unavailable, note what issues should be created and create them as soon as `bd` is available.
+
+## Memory and Context Management
+
+**Beads solves agent amnesia:**
+
+- All plans → Beads issues (not in context)
+- All discovered work → Beads issues (not forgotten)
+- All task status → Beads status (persistent)
+- All dependencies → Beads dependencies (visible)
+
+**This frees context for actual code and implementation details.**
+
+### Recovering Memory / Context
+
+**When user says they forgot context or memory fades:**
+
+**Natural language commands that trigger recovery:**
+- `"I forgot what I was doing"`
+- `"Recover memory"`
+- `"Restore context"`
+- `"What was I working on?"`
+- `"Show me my current work"`
+- `"I lost context"`
+- `"read recover.md"`
+
+**What to do:**
+1. Run `./scripts/recover-context.sh`
+2. Show output to user
+3. Query Beads for current work: `bd list --status in_progress --json`
+4. Display full context: `bd show <id> --json`
+
+**The recovery script shows:**
+- Current in-progress work
+- Full issue details and description
+- Dependency tree
+- Recent completed work
+- Project health
+
+**After recovery, tell user:**
+"Recovered context. Current work is issue [ID]. Full details: [summary]"
+
+## Multi-Agent Coordination
+
+Because Beads syncs through Git:
+
+- Multiple agents can work on same project
+- `.beads/issues.jsonl` syncs via git
+- Each agent queries `bd ready --json` to avoid conflicts
+- Dependencies prevent blocking conflicts
+
+## Examples
+
+### Starting Session
+```bash
+# 1. Check ready work
+READY=$(bd ready --json | jq -r '.[0].id')
+echo "Starting work on: $READY"
+
+# 2. Update status
+bd update $READY --status in_progress --json
+
+# 3. Get full context
+bd show $READY --json | jq
+```
+
+### Discovering Bug During Work
+```bash
+# Create issue for discovered bug
+BUG_ID=$(bd create "Auth endpoint returns 500 on invalid token" -t bug -p 0 --json | jq -r '.id')
+
+# Link to current work
+CURRENT_ID="bd-42"
+bd dep add $BUG_ID $CURRENT_ID --type discovered-from
+
+# Add labels
+bd label add $BUG_ID auth,backend,urgent
+```
+
+### Completing Work
+```bash
+# Close with reason
+bd close bd-42 --reason "Fixed auth endpoint validation. Added tests in auth.test.ts. Verified with npm test. Resolves bd-42." --json
+
+# Check for newly unblocked work
+bd ready --json
+```
+
+## Task Lists Integration
+
+**Natural language commands for tasklists:**
+
+**Analyze goals/features and generate tasklist (COMPLETE WORKFLOW):**
+- `"Analyze project goals"`
+- `"Analyze goals from [file] and features from [file]"`
+- `"Read through docs and identify all features"`
+- `"Analyze project features from [directory]"`
+- `"Generate task list from goals"`
+
+**What to do (STEP 1 - DISCOVERY):**
+1. Read user-specified files/directories OR auto-detect common files:
+   - Goals: README.md, CURRENT_GOALS.txt, GOALS.md, PRD.md, docs/GOALS.md, docs/FEATURES.md
+   - Features: FEATURES.md, FEATURE_LIST.md, docs/FEATURES.md, package.json
+   - Codebase: Scan src/, docs/, README.md for implemented features
+2. Compare documented goals vs implemented features in codebase
+3. Identify gaps (documented but not implemented)
+4. Generate tasklist.md with:
+   - Current features (already implemented)
+   - Missing features (documented but not implemented)
+   - Suggested features (based on codebase patterns)
+
+**What to do (STEP 2 - VERIFICATION):**
+1. Run `./scripts/verify-tasks.sh tasklist.md` to show user
+2. Display all features found (current + missing)
+3. **WAIT for user confirmation** - Ask: "Are these features correct?"
+4. Allow user to approve/modify the list
+
+**What to do (STEP 3 - UPDATE):**
+- If user says "Add [feature]" → Update tasklist.md
+- If user says "Remove [feature]" → Update tasklist.md
+- If user approves → Proceed to conversion
+
+**Convert tasklist to Beads:**
+- `"Convert tasklist to Beads"`
+- `"Process tasklist.md"`
+- `"Create Beads issues from tasklist"`
+- `"Convert tasks to Beads issues"`
+
+**What to do:**
+1. Run `./scripts/tasklist-to-beads.sh tasklist.md`
+2. Optionally link to parent: `./scripts/tasklist-to-beads.sh tasklist.md bd-42`
+3. Verify issues created: `bd list --json`
+
+**Verify tasks before converting:**
+- `"Verify tasks"`
+- `"Show me the task list"`
+- `"Review tasks before converting"`
+
+**What to do:**
+1. Run `./scripts/verify-tasks.sh tasklist.md`
+2. Show user all tasks from tasklist.md
+3. Wait for confirmation
+
+**When working with task lists:**
+- Read `tasklist.md` and convert unchecked items to Beads issues
+- Use parent-child dependencies to group related tasks
+- Check off items in tasklist.md as you complete Beads issues
+- The script skips items that already exist in Beads
+
+## Project Analysis & Setup
+
+**To analyze project goals/features and generate tasks:**
+
+```bash
+# Analyze specific files/directories
+./scripts/analyze-project-goals.sh goals.md features.md
+
+# Auto-detect and analyze
+./scripts/analyze-project-goals.sh
+
+# Verify tasks before converting
+./scripts/verify-tasks.sh tasklist.md
+```
+
+**Complete project setup (cleanup + analyze + verify):**
+
+```bash
+# Full setup with verification
+./scripts/project-setup.sh [goals-file] [features-file]
+
+# Or step by step:
+./scripts/cleanup-repo.sh --dry-run        # Review cleanup
+./scripts/check-updates.sh                # Check recent changes
+./scripts/analyze-project-goals.sh         # Generate tasks
+./scripts/verify-tasks.sh tasklist.md     # Verify before Beads
+```
+
+**When user asks to analyze goals/features:**
+1. Run `./scripts/analyze-project-goals.sh` with provided files/dirs
+2. Review generated `tasklist.md`
+3. Run `./scripts/verify-tasks.sh tasklist.md` to show user
+4. Wait for user confirmation before converting to Beads
+5. Convert with `./scripts/tasklist-to-beads.sh tasklist.md`
+
+## Secret Detection
+
+**To check for secrets in codebase:**
+
+```bash
+# Check for secrets
+./scripts/check-secrets.sh
+
+# Attempt automatic fixes
+./scripts/check-secrets.sh --fix
+```
+
+**When user asks about secrets/security:**
+- Run `./scripts/check-secrets.sh` to scan codebase
+- Check for hardcoded API keys, tokens, passwords
+- Replace with environment variables
+- Secrets are automatically checked in code quality gates
+
+## Enforcement
+
+**Agents MUST:**
+- Query Beads at session start
+- File issues for discovered work
+- Update status when starting/stopping work
+- Close with detailed reasons
+- Use `--json` flag always
+- Convert tasklist.md files to Beads issues when encountered
+
+**Violations:**
+- Starting work without querying `bd ready --json` = Block and redirect
+- Not filing issues for discovered problems = Create issue automatically
+- Not updating status = Update status automatically when detected
+- Not using `--json` = Re-run command with `--json` flag

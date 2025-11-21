@@ -78,24 +78,25 @@ model Contact {
 
 // Card System
 model Card {
-  id                    Int      @id @default(autoincrement()) @map("id")
-  user_id               String?  @map("user_id") @db.Uuid
-  contact_id            Int?     @map("contact_id")
-  title                 String   @map("title")
-  message               String   @map("message")
-  template              String   @map("template")
-  background_style      String   @map("background_style")
-  text_style            String   @map("text_style")
-  elements              Json?    @map("elements") @db.JsonB
-  status                String   @default("draft") @map("status")
-  sent_at               DateTime? @map("sent_at") @db.Timestamptz
-  created_at            DateTime @default(now()) @map("created_at") @db.Timestamptz
+   id                    Int      @id @default(autoincrement()) @map("id")
+   user_id               String?  @map("user_id") @db.Uuid
+   contact_id            Int?     @map("contact_id")
+   title                 String   @map("title")
+   message               String   @map("message")
+   template              String   @map("template")
+   background_style      String   @map("background_style")
+   text_style            String   @map("text_style")
+   elements              Json?    @map("elements") @db.JsonB
+   holiday_category      String?  @map("holiday_category")
+   status                String   @default("draft") @map("status")
+   sent_at               DateTime? @map("sent_at") @db.Timestamptz
+   created_at            DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  user                  User?    @relation(fields: [user_id], references: [id], onDelete: SetNull, map: "cards_user_id_fkey")
-  contact               Contact? @relation(fields: [contact_id], references: [id], onDelete: SetNull, map: "cards_contact_id_fkey")
-  card_designs          CardDesign[]
+   user                  User?    @relation(fields: [user_id], references: [id], onDelete: SetNull, map: "cards_user_id_fkey")
+   contact               Contact? @relation(fields: [contact_id], references: [id], onDelete: SetNull, map: "cards_contact_id_fkey")
+   card_designs          CardDesign[]
 
-  @@map("cards")
+   @@map("cards")
 }
 
 model CardDesign {
