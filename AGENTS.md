@@ -226,6 +226,30 @@ Scheduled send workflows
 
 Contacts + personalization pipelines
 
+8.4 Build and Deployment Requirements
+
+CRITICAL: Follow MEMORY_PROCEDURES.md Section 13 (Build Stability Protocol)
+
+Node 20.19.5 (verify with node -v)
+
+Next.js 14.2.15 (NOT Next.js 15.x)
+
+React 18.x (NOT React 19)
+
+swcMinify: false in next.config.mjs
+
+Hard reset on build errors: rm -rf .next node_modules pnpm-lock.yaml
+
+Database migrations:
+
+Follow MEMORY_PROCEDURES.md Section 14 (Supabase Migration Errors)
+
+Use DROP TABLE IF EXISTS in reverse dependency order
+
+Test migrations locally before production
+
+Backup data before destructive migrations
+
 🔱 9. Communication Standards for Agents
 
 Agents must:
