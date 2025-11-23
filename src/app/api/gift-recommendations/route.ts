@@ -1,21 +1,24 @@
 /**
  * Gift Recommendations API Route
  * Phase 3 - BirthdayGen.com (AI Gift Recommendation Foundation)
- * 
+ *
  * Handles POST requests for gift recommendations using rule-based logic.
  * No external APIs - all recommendations are generated from mock data
  * and enriched contact profiles from auto-populate system.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import {
+  GiftCategory,
+  PriceRange,
+  OccasionType,
+} from '@/lib/gifts/schema';
 import type {
   RecommendationRequest,
   RecommendationResponse,
   GiftRecommendation,
   ProductDetails,
-  GiftCategory,
-  PriceRange,
-  OccasionType,
+  RecipientProfile,
 } from '@/lib/gifts/schema';
 import { GiftingStyle } from '@/lib/autopopulate/types';
 
@@ -62,7 +65,7 @@ const MOCK_PRODUCTS: MockProduct[] = [
     occasions: [OccasionType.BIRTHDAY, OccasionType.CHRISTMAS, OccasionType.THANK_YOU],
     vibes: ['tech', 'glam'],
   },
-  
+
   // Experiences
   {
     id: 'exp-001',
@@ -88,7 +91,7 @@ const MOCK_PRODUCTS: MockProduct[] = [
     occasions: [OccasionType.BIRTHDAY, OccasionType.JUST_BECAUSE],
     vibes: ['sporty', 'adventurous'],
   },
-  
+
   // Home & Decor
   {
     id: 'home-001',
@@ -114,7 +117,7 @@ const MOCK_PRODUCTS: MockProduct[] = [
     occasions: [OccasionType.BIRTHDAY, OccasionType.CHRISTMAS, OccasionType.HOUSEWARMING],
     vibes: ['vintage', 'artsy'],
   },
-  
+
   // Fashion & Beauty
   {
     id: 'fashion-001',
@@ -140,7 +143,7 @@ const MOCK_PRODUCTS: MockProduct[] = [
     occasions: [OccasionType.MOTHERS_DAY, OccasionType.BIRTHDAY, OccasionType.THANK_YOU],
     vibes: ['zen', 'glam'],
   },
-  
+
   // Personalized & Sentimental
   {
     id: 'personal-001',
@@ -166,7 +169,7 @@ const MOCK_PRODUCTS: MockProduct[] = [
     occasions: [OccasionType.GRADUATION, OccasionType.BIRTHDAY, OccasionType.THANK_YOU],
     vibes: ['vintage', 'artsy'],
   },
-  
+
   // Food & Gourmet
   {
     id: 'food-001',
@@ -192,7 +195,7 @@ const MOCK_PRODUCTS: MockProduct[] = [
     occasions: [OccasionType.BIRTHDAY, OccasionType.CHRISTMAS, OccasionType.THANK_YOU],
     vibes: ['foodie', 'cozy'],
   },
-  
+
   // Wellness & Sports
   {
     id: 'wellness-001',
@@ -218,7 +221,7 @@ const MOCK_PRODUCTS: MockProduct[] = [
     occasions: [OccasionType.BIRTHDAY, OccasionType.GRADUATION, OccasionType.CHRISTMAS],
     vibes: ['adventurous', 'sporty'],
   },
-  
+
   // Art & Creative
   {
     id: 'art-001',
@@ -244,7 +247,7 @@ const MOCK_PRODUCTS: MockProduct[] = [
     occasions: [OccasionType.HOUSEWARMING, OccasionType.CHRISTMAS, OccasionType.WEDDING],
     vibes: ['cozy', 'vintage'],
   },
-  
+
   // Jewelry
   {
     id: 'jewelry-001',
@@ -258,7 +261,7 @@ const MOCK_PRODUCTS: MockProduct[] = [
     occasions: [OccasionType.BIRTHDAY, OccasionType.MOTHERS_DAY, OccasionType.VALENTINES],
     vibes: ['cosmic', 'glam'],
   },
-  
+
   // Books
   {
     id: 'books-001',
@@ -286,7 +289,7 @@ function calculateMatchScore(
   request: RecommendationRequest
 ): { score: number; factors: GiftRecommendation['matchFactors']; reasoning: string } {
   const { recipient, occasion, budget, engagementAnswers, preferredCategories } = request;
-  
+
   let totalScore = 0;
   const factors: GiftRecommendation['matchFactors'] = {
     giftingStyleMatch: 0,
@@ -296,13 +299,13 @@ function calculateMatchScore(
     relationshipMatch: 0,
   };
   const reasoningParts: string[] = [];
-  
+
   // 1. GIFTING STYLE MATCH (30% weight)
   if (recipient.giftingProfile?.style) {
     const styleMatch = product.giftingStyles.includes(recipient.giftingProfile.style);
     factors.giftingStyleMatch = styleMatch ? 90 : 40;
     totalScore += factors.giftingStyleMatch * 0.3;
-    
+
     if (styleMatch) {
       reasoningParts.push(`Matches ${recipient.giftingProfile.style} gifting style`);
     }
@@ -310,39 +313,39 @@ function calculateMatchScore(
     factors.giftingStyleMatch = 50; // Neutral when unknown
     totalScore += 50 * 0.3;
   }
-  
+
   // 2. OCCASION MATCH (25% weight)
   const occasionMatch = product.occasions.includes(occasion);
   factors.occasionMatch = occasionMatch ? 95 : 50;
   totalScore += factors.occasionMatch * 0.25;
-  
+
   if (occasionMatch) {
     reasoningParts.push(`Perfect for ${occasion}`);
   }
-  
+
   // 3. BUDGET MATCH (20% weight)
   const inBudget = product.estimatedPrice >= budget.min && product.estimatedPrice <= budget.max;
   const budgetProximity = budget.preferred
     ? 100 - Math.min(Math.abs(product.estimatedPrice - budget.preferred) / budget.preferred * 100, 100)
     : inBudget ? 80 : 30;
-  
+
   factors.budgetMatch = budgetProximity;
   totalScore += budgetProximity * 0.2;
-  
+
   if (inBudget) {
     reasoningParts.push(`Within your $${budget.min}-$${budget.max} budget`);
   }
-  
+
   // 4. VIBE/ENGAGEMENT MATCH (15% weight)
   let vibeScore = 50; // Default neutral
   if (engagementAnswers?.pickTheirVibe?.selectedVibes) {
-    const vibesMatch = product.vibes.some(v => 
+    const vibesMatch = product.vibes.some(v =>
       engagementAnswers.pickTheirVibe!.selectedVibes.includes(v)
     );
     vibeScore = vibesMatch ? 95 : 40;
-    
+
     if (vibesMatch) {
-      const matchedVibes = product.vibes.filter(v => 
+      const matchedVibes = product.vibes.filter(v =>
         engagementAnswers.pickTheirVibe!.selectedVibes.includes(v)
       );
       reasoningParts.push(`Matches "${matchedVibes[0]}" vibe you selected`);
@@ -350,7 +353,7 @@ function calculateMatchScore(
   }
   factors.archetypeMatch = vibeScore;
   totalScore += vibeScore * 0.15;
-  
+
   // 5. RELATIONSHIP CONTEXT (10% weight)
   // Adjust based on relationship formality
   let relationshipScore = 70; // Default
@@ -375,17 +378,17 @@ function calculateMatchScore(
   }
   factors.relationshipMatch = relationshipScore;
   totalScore += relationshipScore * 0.1;
-  
+
   // 6. PREFERRED CATEGORIES BOOST
   if (preferredCategories?.includes(product.category)) {
     totalScore += 10;
     reasoningParts.push(`In your preferred "${product.category}" category`);
   }
-  
-  const reasoning = reasoningParts.length > 0 
+
+  const reasoning = reasoningParts.length > 0
     ? reasoningParts.join('. ') + '.'
     : 'Good general match for this occasion.';
-  
+
   return { score: Math.round(totalScore), factors, reasoning };
 }
 
@@ -398,17 +401,17 @@ function generateWhyThisGift(
   request: RecommendationRequest
 ): string {
   const parts: string[] = [];
-  
+
   // Lead with recipient context
   if (recipient.threeWords && recipient.threeWords.length > 0) {
     parts.push(`Since ${recipient.name || 'they'} is ${recipient.threeWords.join(', ')}`);
   } else if (recipient.giftingProfile?.style) {
     parts.push(`Based on their ${recipient.giftingProfile.style} style`);
   }
-  
+
   // Add product benefit
   parts.push(`this ${product.name.toLowerCase()} is a perfect choice`);
-  
+
   // Add specific reasoning
   if (product.category === GiftCategory.EXPERIENCES) {
     parts.push('for creating memorable moments together');
@@ -419,7 +422,7 @@ function generateWhyThisGift(
   } else {
     parts.push(`for ${request.occasion.replace('_', ' ')}`);
   }
-  
+
   return parts.join(' ') + '.';
 }
 
@@ -428,22 +431,22 @@ function generateWhyThisGift(
  */
 function generateRecommendations(request: RecommendationRequest): GiftRecommendation[] {
   const startTime = Date.now();
-  
+
   // Filter products by budget first
-  const affordableProducts = MOCK_PRODUCTS.filter(p => 
-    p.estimatedPrice >= request.budget.min && 
+  const affordableProducts = MOCK_PRODUCTS.filter(p =>
+    p.estimatedPrice >= request.budget.min &&
     p.estimatedPrice <= request.budget.max
   );
-  
+
   // Filter out excluded categories
-  const filteredProducts = affordableProducts.filter(p => 
+  const filteredProducts = affordableProducts.filter(p =>
     !request.excludeCategories?.includes(p.category)
   );
-  
+
   // Calculate scores for all products
   const scoredProducts = filteredProducts.map(product => {
     const { score, factors, reasoning } = calculateMatchScore(product, request);
-    
+
     const recommendation: GiftRecommendation = {
       id: `rec-${product.id}-${Date.now()}`,
       product: {
@@ -460,15 +463,15 @@ function generateRecommendations(request: RecommendationRequest): GiftRecommenda
       whyThisGift: generateWhyThisGift(product, request.recipient, request),
       personalizeIdea: `Add a handwritten note about ${request.recipient.name}'s special qualities to make this gift even more meaningful.`,
     };
-    
+
     return recommendation;
   });
-  
+
   // Sort by confidence score and return top 10
   const topRecommendations = scoredProducts
     .sort((a, b) => b.confidence - a.confidence)
     .slice(0, 10);
-  
+
   return topRecommendations;
 }
 
@@ -479,7 +482,7 @@ function generateRecommendations(request: RecommendationRequest): GiftRecommenda
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json() as RecommendationRequest;
-    
+
     // Validate request
     if (!body.recipient || !body.occasion || !body.budget) {
       return NextResponse.json(
@@ -493,7 +496,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    
+
     // Validate budget
     if (body.budget.min < 0 || body.budget.max < body.budget.min) {
       return NextResponse.json(
@@ -507,12 +510,12 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    
+
     const startTime = Date.now();
-    
+
     // Generate recommendations
     const recommendations = generateRecommendations(body);
-    
+
     // If no recommendations found, return helpful message
     if (recommendations.length === 0) {
       return NextResponse.json({
@@ -526,7 +529,7 @@ export async function POST(request: NextRequest) {
         warnings: ['No matching products found. Consider adjusting your budget or preferences.'],
       } as RecommendationResponse);
     }
-    
+
     // Calculate response metadata
     const topCategories = [...new Set(recommendations.map(r => r.product.category))].slice(0, 5);
     const prices = recommendations.map(r => r.product.estimatedPrice || 0);
@@ -535,7 +538,7 @@ export async function POST(request: NextRequest) {
       max: Math.max(...prices),
       average: Math.round(prices.reduce((a, b) => a + b, 0) / prices.length),
     };
-    
+
     // Generate recipient summary
     let recipientSummary = `Based on `;
     if (body.recipient.threeWords && body.recipient.threeWords.length > 0) {
@@ -546,7 +549,7 @@ export async function POST(request: NextRequest) {
       recipientSummary += `the occasion and your preferences`;
     }
     recipientSummary += `, here are ${recommendations.length} personalized gift recommendations.`;
-    
+
     const response: RecommendationResponse = {
       success: true,
       recommendations,
@@ -556,11 +559,11 @@ export async function POST(request: NextRequest) {
       topCategories,
       budgetUtilization,
     };
-    
+
     return NextResponse.json(response);
   } catch (error) {
     console.error('Gift recommendations error:', error);
-    
+
     return NextResponse.json(
       {
         success: false,

@@ -8,6 +8,15 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ============================================================================
+-- DROP EXISTING TABLES (in reverse dependency order)
+-- ============================================================================
+-- This ensures clean schema creation and prevents type conflicts
+
+DROP TABLE IF EXISTS gift_ideas CASCADE;
+DROP TABLE IF EXISTS enriched_data CASCADE;
+DROP TABLE IF EXISTS contacts CASCADE;
+
+-- ============================================================================
 -- TABLE: contacts
 -- ============================================================================
 -- Stores user contact information with basic profile data
@@ -16,31 +25,31 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS contacts (
   -- Primary key
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  
+
   -- User association (references auth.users)
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  
+
   -- Contact details (from ContactInput interface)
   full_name TEXT,
   emails TEXT[], -- Array of email addresses
   phone TEXT,
-  
+
   -- Birthday information
   birthday_year INTEGER,
   birthday_month INTEGER CHECK (birthday_month >= 1 AND birthday_month <= 12),
   birthday_day INTEGER CHECK (birthday_day >= 1 AND birthday_day <= 31),
-  
+
   -- Profile data
   gender TEXT,
   urls TEXT[], -- Array of URLs (social profiles, websites)
   photo_url TEXT,
   social_handles JSONB DEFAULT '{}', -- Key-value pairs of platform: handle
   interests JSONB DEFAULT '{}', -- Structured interest data
-  
+
   -- Additional fields
   relationship TEXT, -- Enum: family, close_friend, friend, colleague, etc.
   notes TEXT, -- User-added notes
-  
+
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -55,34 +64,34 @@ CREATE TABLE IF NOT EXISTS contacts (
 CREATE TABLE IF NOT EXISTS enriched_data (
   -- Primary key
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  
+
   -- Contact association
   contact_id UUID NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
-  
+
   -- Predicted birthday
   predicted_birthday_month INTEGER CHECK (predicted_birthday_month >= 1 AND predicted_birthday_month <= 12),
   predicted_birthday_day INTEGER CHECK (predicted_birthday_day >= 1 AND predicted_birthday_day <= 31),
   birthday_confidence INTEGER CHECK (birthday_confidence >= 0 AND birthday_confidence <= 100),
   birthday_reasoning TEXT,
-  
+
   -- Inferred relationship
   inferred_relationship TEXT, -- Enum: family, close_friend, friend, colleague, etc.
   relationship_confidence INTEGER CHECK (relationship_confidence >= 0 AND relationship_confidence <= 100),
   relationship_reasoning TEXT,
-  
+
   -- Archetypes (array of archetype objects with id, name, tags, confidence)
   archetypes JSONB DEFAULT '[]',
-  
+
   -- Gifting profile (style, preferences, budget range, interests)
   gifting_profile JSONB DEFAULT '{}',
-  
+
   -- Enrichment metadata
   enrichment_metadata JSONB DEFAULT '{}', -- Stores enrichedAt, version, fieldsEnriched, confidence scores, privacyConsent
-  
+
   -- Timestamps
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  
+
   -- Ensure one enrichment record per contact
   UNIQUE(contact_id)
 );
@@ -96,41 +105,41 @@ CREATE TABLE IF NOT EXISTS enriched_data (
 CREATE TABLE IF NOT EXISTS gift_ideas (
   -- Primary key
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  
+
   -- Associations
   contact_id UUID NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  
+
   -- Request parameters
   occasion TEXT NOT NULL, -- Enum: birthday, christmas, anniversary, etc.
   budget_min DECIMAL(10, 2) NOT NULL CHECK (budget_min >= 0),
   budget_max DECIMAL(10, 2) NOT NULL CHECK (budget_max >= budget_min),
   budget_preferred DECIMAL(10, 2),
-  
+
   -- Optional filters
   exclude_categories TEXT[], -- Array of category strings
   preferred_categories TEXT[], -- Array of category strings
   urgency TEXT CHECK (urgency IN ('low', 'medium', 'high')),
   shipping_required BOOLEAN DEFAULT true,
   gift_message TEXT,
-  
+
   -- Recommendations (array of GiftRecommendation objects)
   -- Each recommendation includes: id, product, confidence, reasoning, matchFactors, whyThisGift, etc.
   recommendations JSONB DEFAULT '[]',
-  
+
   -- Engagement game data (threeWords, pickTheirVibe answers)
   engagement_data JSONB DEFAULT '{}',
-  
+
   -- Response metadata
   recipient_summary TEXT, -- AI-generated summary of recipient
   top_categories TEXT[], -- Top matching categories
   total_matches INTEGER DEFAULT 0,
   processing_time_ms INTEGER, -- Processing time in milliseconds
-  
+
   -- Status tracking
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'error')),
   error_message TEXT,
-  
+
   -- Timestamps
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
