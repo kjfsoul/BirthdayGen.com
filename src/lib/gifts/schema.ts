@@ -81,6 +81,7 @@ export enum OccasionType {
 
 /**
  * Product details for gift recommendations
+ * @deprecated Use Product interface for real product data. This is kept for backward compatibility.
  */
 export interface ProductDetails {
   name: string;
@@ -92,6 +93,61 @@ export interface ProductDetails {
   affiliateLink?: string;
   vendor?: string;
   tags: string[];
+}
+
+// ============================================================================
+// REAL PRODUCT DATA TYPES (Module C)
+// ============================================================================
+
+/**
+ * Product source types for external API integrations
+ */
+export type ProductSource = 
+  | 'printify' 
+  | 'amazon' 
+  | 'etsy' 
+  | 'tiktok_shop' 
+  | 'internal';
+
+/**
+ * Real product data structure with external API integration support
+ */
+export interface Product {
+  // Core identifiers
+  id: string;
+  source: ProductSource;
+  
+  // Basic info
+  name: string;
+  description: string;
+  category: GiftCategory;
+  
+  // Pricing
+  price: number;
+  currency: string; // ISO 4217 currency code (e.g., "USD", "EUR")
+  
+  // Media & Links
+  imageUrl: string;
+  productUrl: string;
+  affiliateUrl?: string;
+  
+  // Vendor info
+  vendorName: string;
+  
+  // Classification & Search
+  tags: string[];
+  
+  // Additional metadata
+  metadata?: {
+    rating?: number; // 0-5
+    reviewCount?: number;
+    inStock?: boolean;
+    shippingInfo?: string;
+    estimatedDelivery?: string;
+    externalId?: string; // ID from source API
+    lastUpdated?: string; // ISO timestamp
+    [key: string]: unknown; // Allow flexible metadata from different sources
+  };
 }
 
 /**
@@ -116,6 +172,29 @@ export interface GiftRecommendation {
   whyThisGift: string; // User-friendly explanation
   alternativeSuggestions?: string[];
   personalizeIdea?: string; // How to make it more personal
+}
+
+/**
+ * Product fetch status for gift recommendations (Module D)
+ * 
+ * Indicates the result of attempting to fetch real products for a recommendation
+ */
+export type ProductsStatus = 
+  | 'ok' // Products found successfully
+  | 'no_products_configured' // All product APIs missing keys
+  | 'no_products_found' // APIs configured but no matches
+  | 'integration_error'; // API calls failed
+
+/**
+ * Extended gift recommendation with real product data (Module D)
+ * 
+ * Extends GiftRecommendation with actual product listings from external APIs.
+ * Backward compatible - existing clients can ignore new fields.
+ */
+export interface GiftRecommendationWithProducts extends GiftRecommendation {
+  // Real product data (Module D)
+  products: Product[]; // Empty array if APIs not configured
+  productsStatus: ProductsStatus;
 }
 
 // ============================================================================
@@ -233,6 +312,16 @@ export interface RecommendationResponse {
     message: string;
   };
   warnings?: string[];
+}
+
+/**
+ * Response with gift recommendations including real product data (Module D)
+ * 
+ * Extended response type that includes real product listings from external APIs.
+ * Backward compatible - can be used in place of RecommendationResponse.
+ */
+export interface RecommendationResponseWithProducts extends Omit<RecommendationResponse, 'recommendations'> {
+  recommendations: GiftRecommendationWithProducts[];
 }
 
 // ============================================================================
@@ -406,4 +495,51 @@ export const OCCASION_LABELS: Record<OccasionType, string> = {
   [OccasionType.HOUSEWARMING]: 'Housewarming',
   [OccasionType.THANK_YOU]: 'Thank You',
   [OccasionType.JUST_BECAUSE]: 'Just Because',
+};
+
+
+// ============================================================================
+// PRODUCT HELPER TYPES (Module C)
+// ============================================================================
+
+/**
+ * Helper to convert Product to ProductDetails for backward compatibility
+ */
+export function productToProductDetails(product: Product): ProductDetails {
+  // Determine price range from actual price
+  let priceRange: PriceRange;
+  if (product.price <= 25) {
+    priceRange = PriceRange.BUDGET;
+  } else if (product.price <= 50) {
+    priceRange = PriceRange.AFFORDABLE;
+  } else if (product.price <= 100) {
+    priceRange = PriceRange.MODERATE;
+  } else if (product.price <= 250) {
+    priceRange = PriceRange.PREMIUM;
+  } else {
+    priceRange = PriceRange.LUXURY;
+  }
+
+  return {
+    name: product.name,
+    description: product.description,
+    category: product.category,
+    priceRange,
+    estimatedPrice: product.price,
+    imageUrl: product.imageUrl,
+    affiliateLink: product.affiliateUrl,
+    vendor: product.vendorName,
+    tags: product.tags,
+  };
+}
+
+/**
+ * Product source display names
+ */
+export const PRODUCT_SOURCE_LABELS: Record<ProductSource, string> = {
+  printify: 'Printify',
+  amazon: 'Amazon',
+  etsy: 'Etsy',
+  tiktok_shop: 'TikTok Shop',
+  internal: 'Internal',
 };

@@ -11,9 +11,8 @@ import type {
   RecipientProfile,
   ThreeWordsGameAnswer,
   PickTheirVibeGameAnswer,
-  GiftCategory,
 } from '@/lib/gifts/schema';
-import { VIBE_OPTIONS } from '@/lib/gifts/schema';
+import { VIBE_OPTIONS, GiftCategory } from '@/lib/gifts/schema';
 import type { EnrichedContact, GiftingStyle } from '@/lib/autopopulate/types';
 
 // ============================================================================
@@ -203,7 +202,7 @@ export function enhanceRecipientProfile(
     
     // Add inferred interests from personality traits
     const personalityTraits = engagementAnswers.threeWords.extractedTraits.personality;
-    enhanced.interests = Array.from(new Set([...enhanced.interests, ...personalityTraits]));
+    enhanced.interests = Array.from(new Set([...(enhanced.interests || []), ...personalityTraits]));
   }
   
   // Process PickTheirVibeGame data
@@ -213,7 +212,7 @@ export function enhanceRecipientProfile(
     const processed = processPickTheirVibeAnswer(engagementAnswers.pickTheirVibe);
     
     // Add aesthetic tags as interests
-    enhanced.interests = Array.from(new Set([...enhanced.interests, ...processed.aestheticTags]));
+    enhanced.interests = Array.from(new Set([...(enhanced.interests || []), ...processed.aestheticTags]));
   }
   
   return enhanced;
