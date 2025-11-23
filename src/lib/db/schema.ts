@@ -187,6 +187,49 @@ export interface GiftIdeaUpdate {
 }
 
 // ============================================================================
+// TABLE: privacy_consents
+// ============================================================================
+
+export interface PrivacyConsentRow {
+  id: string; // UUID
+  user_id: string; // UUID
+  consent_given: boolean;
+  consent_date: string; // TIMESTAMPTZ
+  allow_birthday_prediction: boolean | null;
+  allow_relationship_inference: boolean | null;
+  allow_archetype_tagging: boolean | null;
+  allow_external_enrichment: boolean | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string; // TIMESTAMPTZ
+  updated_at: string; // TIMESTAMPTZ
+}
+
+export interface PrivacyConsentInsert {
+  id?: string;
+  user_id: string;
+  consent_given: boolean;
+  consent_date?: string;
+  allow_birthday_prediction?: boolean | null;
+  allow_relationship_inference?: boolean | null;
+  allow_archetype_tagging?: boolean | null;
+  allow_external_enrichment?: boolean | null;
+  ip_address?: string | null;
+  user_agent?: string | null;
+}
+
+export interface PrivacyConsentUpdate {
+  consent_given?: boolean;
+  consent_date?: string;
+  allow_birthday_prediction?: boolean | null;
+  allow_relationship_inference?: boolean | null;
+  allow_archetype_tagging?: boolean | null;
+  allow_external_enrichment?: boolean | null;
+  ip_address?: string | null;
+  user_agent?: string | null;
+}
+
+// ============================================================================
 // DATABASE TYPE
 // ============================================================================
 
@@ -207,6 +250,11 @@ export interface Database {
         Row: GiftIdea;
         Insert: GiftIdeaInsert;
         Update: GiftIdeaUpdate;
+      };
+      privacy_consents: {
+        Row: PrivacyConsentRow;
+        Insert: PrivacyConsentInsert;
+        Update: PrivacyConsentUpdate;
       };
     };
   };

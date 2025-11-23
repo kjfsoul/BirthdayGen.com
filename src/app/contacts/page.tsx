@@ -10,12 +10,21 @@ import { ImportGoogle } from '@/components/contacts/ImportGoogle';
 import { ImportMicrosoft } from '@/components/contacts/ImportMicrosoft';
 import { ImportLinkedInCSV } from '@/components/contacts/ImportLinkedInCSV';
 import { ImportFacebook } from '@/components/contacts/ImportFacebook';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Sparkles } from 'lucide-react';
 
 function ContactsPageContent() {
   return (
     <main className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Contacts Dashboard</h1>
+        <Link href="/contacts/autopopulate">
+          <Button className="gap-2" size="lg">
+            <Sparkles className="h-5 w-5" />
+            Auto-Populate
+          </Button>
+        </Link>
       </div>
 
       {/* Imports Panel */}
