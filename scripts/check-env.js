@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
-const requiredVersion = 'v20.19.5';
+const requiredVersions = ['v20.19.5', 'v20.19.4'];
 const currentVersion = process.version;
 
-if (currentVersion !== requiredVersion) {
-    console.error(`\x1b[31m
+if (!requiredVersions.includes(currentVersion)) {
+  console.error(`\x1b[31m
   ============================================================
   🚨 CRITICAL ENVIRONMENT ERROR 🚨
   ============================================================
@@ -22,7 +22,7 @@ if (currentVersion !== requiredVersion) {
 
   ============================================================
   \x1b[0m`);
-    process.exit(1);
+  process.exit(1);
 }
 
 console.log(`\x1b[32m✅ Environment Check Passed: Node.js ${currentVersion}\x1b[0m`);
