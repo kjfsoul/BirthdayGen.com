@@ -27,7 +27,7 @@ import { Badge } from '@/components/ui/badge';
 
 interface BulkContactControlsProps {
   enrichedContacts: EnrichedContact[];
-  selectedContactIds?: number[];
+  selectedContactIds?: string[];
   onAcceptAll?: () => Promise<void>;
   onRejectAll?: () => Promise<void>;
   onSaveToDatabase?: (contacts: EnrichedContact[]) => Promise<void>;
@@ -38,7 +38,7 @@ interface BulkContactControlsProps {
 
 /**
  * BulkContactControls - Bulk operations for enriched contacts
- * 
+ *
  * Features:
  * - Bulk accept all enriched data
  * - Bulk reject all enriched data
@@ -140,7 +140,7 @@ export function BulkContactControls({
               <span className="text-xs text-muted-foreground">Total:</span>
               <span className="font-semibold">{selectedContacts.length}</span>
             </Badge>
-            
+
             {highConfidenceCount > 0 && (
               <Badge variant="default" className="gap-1 bg-green-500">
                 <CheckCircle className="h-3 w-3" />
@@ -148,7 +148,7 @@ export function BulkContactControls({
                 <span className="text-xs">High</span>
               </Badge>
             )}
-            
+
             {mediumConfidenceCount > 0 && (
               <Badge variant="secondary" className="gap-1">
                 <AlertTriangle className="h-3 w-3" />
@@ -156,7 +156,7 @@ export function BulkContactControls({
                 <span className="text-xs">Medium</span>
               </Badge>
             )}
-            
+
             {lowConfidenceCount > 0 && (
               <Badge variant="destructive" className="gap-1">
                 <XCircle className="h-3 w-3" />

@@ -9,10 +9,10 @@ VIOL=0
 
 echo "🔍 Running Agent Protocol Compliance Checks..."
 
-# Check 1: Verify AGENT_PROTOCOL.md exists and is readable
-PROTOCOL_FILE="docs/AGENT_PROTOCOL.md"
+# Check 1: Verify AGENTS.md exists and is readable
+PROTOCOL_FILE="AGENTS.md"
 if [[ ! -f "$PROTOCOL_FILE" ]]; then
-    echo "❌ CRITICAL: AGENT_PROTOCOL.md not found at $PROTOCOL_FILE"
+    echo "❌ CRITICAL: AGENTS.md not found at $PROTOCOL_FILE"
     exit 1
 fi
 
@@ -43,12 +43,12 @@ fi
 echo "✅ Proof format is valid"
 
 # Check 4: Verify required files exist according to proof
-AGENT_PROTOCOL_EXISTS=$(jq -r '.files["AGENT_PROTOCOL.md"]' "$PROOF_FILE")
+AGENT_PROTOCOL_EXISTS=$(jq -r '.files["AGENTS.md"]' "$PROOF_FILE")
 PROJECT_STATE_EXISTS=$(jq -r '.files["project-state.json"]' "$PROOF_FILE")
 SESSION_EXISTS=$(jq -r '.files["session-'"$TODAY"'.json"]' "$PROOF_FILE")
 
 if [[ "$AGENT_PROTOCOL_EXISTS" != "true" ]]; then
-    echo "❌ CRITICAL: AGENT_PROTOCOL.md was not found when proof was generated"
+    echo "❌ CRITICAL: AGENTS.md was not found when proof was generated"
     exit 1
 fi
 

@@ -35,14 +35,14 @@ import {
 interface EnrichedContactsDisplayProps {
   contacts: EnrichedContact[];
   onEditContact?: (contact: EnrichedContact) => void;
-  onAcceptContact?: (contactId: number) => void;
-  onRejectContact?: (contactId: number) => void;
+  onAcceptContact?: (contactId: string) => void;
+  onRejectContact?: (contactId: string) => void;
   className?: string;
 }
 
 /**
  * EnrichedContactsDisplay - Display enriched contacts in table/card layout
- * 
+ *
  * Features:
  * - Visual distinction between "inferred" vs "confirmed" data
  * - Confidence scores with color coding
@@ -59,7 +59,7 @@ export function EnrichedContactsDisplay({
   onRejectContact,
   className = '',
 }: EnrichedContactsDisplayProps) {
-  const [expandedContact, setExpandedContact] = useState<number | null>(null);
+  const [expandedContact, setExpandedContact] = useState<string | null>(null);
 
   const getConfidenceColor = (confidence: number): string => {
     if (confidence >= 80) return 'text-green-600 dark:text-green-400';

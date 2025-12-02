@@ -31,6 +31,7 @@ model User {
   importJobs            ImportJob[]
   cards                 Card[]
   gift_recommendations  GiftRecommendation[]
+  wishlists             Wishlist[]
   aura_quiz_responses   AuraQuizResponse[]
 
   @@map("users")
@@ -54,22 +55,38 @@ model Profile {
 
 // Contact Management
 model Contact {
-  id                    Int      @id @default(autoincrement()) @map("id")
-  userId                String   @map("user_id") @db.Uuid
-  fullName              String   @map("full_name")
-  emails                String[] @map("emails")
-  birthday              DateTime? @map("birthday") @db.Timestamptz
-  gender                String?  @map("gender")
-  social_handles        Json?    @map("social_handles") @db.JsonB
-  interests             Json?    @map("interests") @db.JsonB
-  categoryIds           String[] @map("category_ids")
-  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  id             String    @id @default(uuid()) @map("id") @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+
+  fullName       String?   @map("full_name")
+  emails         String[]  @map("emails") @db.Text
+  phone          String?   @map("phone")
+
+  birthdayYear   Int?      @map("birthday_year")
+  birthdayMonth  Int?      @map("birthday_month")
+  birthdayDay    Int?      @map("birthday_day")
+
+  gender         String?   @map("gender")
+  urls           String[]  @map("urls") @db.Text
+  photoUrl       String?   @map("photo_url")
+
+  social_handles Json?     @map("social_handles") @db.JsonB
+  interests      Json?     @map("interests") @db.JsonB
+
+  relationship   String?   @map("relationship")
+  notes          String?   @map("notes")
+
+  birthday       DateTime? @map("birthday") @db.Timestamptz
+  categoryIds    Int[]     @map("category_ids")
+
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
   // RLS: userId = auth.uid()
-  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "contacts_user_id_fkey")
-  cards                 Card[]
-  gift_recommendations  GiftRecommendation[]
+  user                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade, map: "contacts_user_id_fkey")
+  cards                Card[]
+  gift_recommendations GiftRecommendation[]
+  wishlists            Wishlist[]
 
   @@map("contacts")
   @@index([userId])
@@ -80,7 +97,7 @@ model Contact {
 model Card {
    id                    Int      @id @default(autoincrement()) @map("id")
    user_id               String?  @map("user_id") @db.Uuid
-   contact_id            Int?     @map("contact_id")
+   contact_id            String?  @map("contact_id") @db.Uuid
    title                 String   @map("title")
    message               String   @map("message")
    template              String   @map("template")
@@ -120,7 +137,7 @@ model CardDesign {
 model GiftRecommendation {
   id                    Int      @id @default(autoincrement()) @map("id")
   user_id               String?  @map("user_id") @db.Uuid
-  contact_id            Int?     @map("contact_id")
+  contact_id            String?  @map("contact_id") @db.Uuid
   aura_type             String   @map("aura_type")
   recommendations       Json     @map("recommendations") @db.JsonB
   created_at            DateTime @default(now()) @map("created_at") @db.Timestamptz
@@ -129,6 +146,58 @@ model GiftRecommendation {
   contact               Contact? @relation(fields: [contact_id], references: [id], onDelete: SetNull, map: "gift_recommendations_contact_id_fkey")
 
   @@map("gift_recommendations")
+}
+
+// Gift Guide System
+model Gift {
+  id                Int       @id @default(autoincrement())
+  title             String
+  description       String
+  image_url         String?
+  price             Decimal   @db.Decimal(10, 2)
+  buy_url           String
+  affiliate_url     String?
+  category          String    // toys, books, experiences, tech
+  aura_types        String[]  // Multiple auras can match
+  age_min           Int?
+  age_max           Int?
+  recipient_types   String[]  // friend, family, colleague
+  popularity_score  Int       @default(0)
+  featured          Boolean   @default(false)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+
+  wishlists         WishlistItem[]
+
+  @@map("gifts")
+}
+
+model Wishlist {
+  id                Int       @id @default(autoincrement())
+  user_id           String    @db.Uuid
+  name              String    // "Mom's Wishlist", "John's Birthday"
+  contact_id        String?   @db.Uuid
+  created_at        DateTime  @default(now())
+
+  user              User      @relation(fields: [user_id], references: [id])
+  contact           Contact?  @relation(fields: [contact_id], references: [id])
+  items             WishlistItem[]
+
+  @@map("wishlists")
+}
+
+model WishlistItem {
+  id                Int       @id @default(autoincrement())
+  wishlist_id       Int
+  gift_id           Int
+  purchased         Boolean   @default(false)
+  notes             String?
+  added_at          DateTime  @default(now())
+
+  wishlist          Wishlist  @relation(fields: [wishlist_id], references: [id])
+  gift              Gift      @relation(fields: [gift_id], references: [id])
+
+  @@map("wishlist_items")
 }
 
 // Aura Quiz System

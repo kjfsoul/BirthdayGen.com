@@ -59,18 +59,45 @@ export function AnimatedCard({
     // })
     const particleCanvasRef = useRef<HTMLCanvasElement>(null)
 
-    // Emit particles when opened
+    // Animation Loop for Particles
     useEffect(() => {
-        if (isOpen) {
-            const interval = setInterval(() => {
-                if (particleCanvasRef.current) {
-                    const { width, height } = particleCanvasRef.current
-                    particleSystem.emit(Math.random() * width, Math.random() * height)
-                }
-            }, 100)
-            return () => clearInterval(interval)
+        if (!isOpen || !particleCanvasRef.current) return
+
+        const canvas = particleCanvasRef.current
+        const ctx = canvas.getContext('2d')
+        if (!ctx) return
+
+        // Set canvas size to match display size
+        const { clientWidth, clientHeight } = canvas
+        if (canvas.width !== clientWidth || canvas.height !== clientHeight) {
+            canvas.width = clientWidth
+            canvas.height = clientHeight
         }
-    }, [isOpen, particleSystem, particleCanvasRef])
+
+        let animationFrameId: number
+        let lastTime = performance.now()
+
+        const render = (time: number) => {
+            const deltaTime = (time - lastTime) / 1000
+            lastTime = time
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+            // Emit new particles occasionally
+            if (Math.random() > 0.9) {
+                particleSystem.emit(Math.random() * canvas.width, Math.random() * canvas.height)
+            }
+
+            particleSystem.update(deltaTime)
+            particleSystem.draw(ctx)
+
+            animationFrameId = requestAnimationFrame(render)
+        }
+
+        render(lastTime)
+
+        return () => cancelAnimationFrame(animationFrameId)
+    }, [isOpen, particleSystem])
 
     // Scratch-off canvas logic
     useEffect(() => {
@@ -104,6 +131,7 @@ export function AnimatedCard({
             ctx.fillText('🎁 Scratch to reveal your gift! 🎁', canvas.width / 2, canvas.height / 2)
 
             let isScratching = false
+            let lastCheckTime = 0
 
             const scratch = (e: MouseEvent | TouchEvent) => {
                 if (!isScratching) return
@@ -118,15 +146,23 @@ export function AnimatedCard({
                 ctx.fill()
 
                 // Check if enough has been scratched
-                // Debounce this check in a real app, or use a counter
-                if (Math.random() > 0.9) { // Optimization: only check 10% of the time
+                // Optimized: Debounce check and use strided loop
+                const now = Date.now()
+                if (now - lastCheckTime > 500) { // Check max every 500ms
+                    lastCheckTime = now
+
                     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
                     const pixels = imageData.data
                     let transparent = 0
-                    for (let i = 3; i < pixels.length; i += 4) {
+                    const stride = 4 // Check every 4th pixel to save CPU
+
+                    for (let i = 3; i < pixels.length; i += (4 * stride)) {
                         if (pixels[i] === 0) transparent++
                     }
-                    if (transparent > pixels.length / 4 / 3) { // 30% scratched
+
+                    const totalPixelsChecked = (pixels.length / 4) / stride
+
+                    if (transparent > totalPixelsChecked * 0.3) { // 30% scratched
                         setScratchRevealed(true)
                         setTimeout(() => setShowScratchOff(false), 1500)
                     }

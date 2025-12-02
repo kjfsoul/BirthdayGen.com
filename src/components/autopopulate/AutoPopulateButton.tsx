@@ -6,7 +6,7 @@ import { Sparkles, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface AutoPopulateButtonProps {
-  contactIds?: number[]; // Optional: specific contacts to enrich
+  contactIds?: string[]; // Optional: specific contacts to enrich (UUIDs)
   onEnrichmentStart?: () => void;
   onEnrichmentComplete?: (success: boolean, count: number) => void;
   onEnrichmentError?: (error: string) => void;
@@ -16,7 +16,7 @@ interface AutoPopulateButtonProps {
 
 /**
  * AutoPopulateButton - Trigger button for contact enrichment
- * 
+ *
  * Features:
  * - Loading states with spinner
  * - Disabled state handling
@@ -46,9 +46,9 @@ export function AutoPopulateButton({
       }
 
       const { contacts } = await contactsResponse.json();
-      
+
       // Filter contacts if specific IDs provided
-      const contactsToEnrich = contactIds 
+      const contactsToEnrich = contactIds
         ? contacts.filter((c: any) => contactIds.includes(c.id))
         : contacts;
 

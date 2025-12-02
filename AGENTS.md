@@ -230,15 +230,17 @@ Contacts + personalization pipelines
 
 CRITICAL: Follow MEMORY_PROCEDURES.md Section 13 (Build Stability Protocol)
 
-Node 20.19.5 (verify with node -v)
+Node 20.19.5 (verify with node -v) - ENFORCED by scripts/check-env.js
 
-Next.js 14.2.15 (NOT Next.js 15.x)
+Vite 6.x+ (SPA Architecture)
+
+React Router 7.x+ (Client-side routing)
 
 React 18.x (NOT React 19)
 
-swcMinify: false in next.config.mjs
+Supabase Edge Functions (for backend logic, replacing API routes)
 
-Hard reset on build errors: rm -rf .next node_modules pnpm-lock.yaml
+Hard reset on build errors: rm -rf dist node_modules pnpm-lock.yaml
 
 Database migrations:
 

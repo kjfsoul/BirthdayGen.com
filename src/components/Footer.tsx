@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 import { footerLinks } from '@/config/footerLinks'
 
 export default function Footer() {
@@ -17,7 +17,7 @@ export default function Footer() {
                 {section.items.map((item) => (
                   <li key={item.href}>
                     <Link
-                      href={item.href}
+                      to={item.href}
                       className="text-sm text-muted-foreground hover:text-foreground hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors"
                       aria-label={item.label}
                     >

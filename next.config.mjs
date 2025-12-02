@@ -1,7 +1,5 @@
-/** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Stable build configuration (MEMORY_PROCEDURES.md Section 13)
-  swcMinify: false,
+  output: 'standalone',
   eslint: {
     ignoreDuringBuilds: true,
   },

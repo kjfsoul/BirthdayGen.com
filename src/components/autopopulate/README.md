@@ -85,8 +85,8 @@ Display enriched contacts in a detailed table with expandable rows.
 interface EnrichedContactsDisplayProps {
   contacts: EnrichedContact[];
   onEditContact?: (contact: EnrichedContact) => void;
-  onAcceptContact?: (contactId: number) => void;
-  onRejectContact?: (contactId: number) => void;
+  onAcceptContact?: (contactId: string) => void;
+  onRejectContact?: (contactId: string) => void;
   className?: string;
 }
 ```
@@ -430,6 +430,6 @@ For issues or questions:
 
 ---
 
-**Version:** 1.0.0  
-**Last Updated:** November 21, 2025  
+**Version:** 1.0.0
+**Last Updated:** November 21, 2025
 **Maintainer:** DeepAgent

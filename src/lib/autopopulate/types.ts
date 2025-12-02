@@ -12,7 +12,7 @@
  * Matches existing NormalizedContact from contacts-import.ts
  */
 export interface ContactInput {
-  id?: number;
+  id?: string;
   fullName?: string;
   emails?: string[];
   birthday?: {
@@ -253,7 +253,7 @@ export interface RateLimitStatus {
 export interface EnrichmentLogEntry {
   timestamp: Date;
   userId: string;
-  contactId?: number;
+  contactId?: string;
   operation: 'enrich_single' | 'enrich_batch' | 'predict_birthday' | 'infer_relationship' | 'tag_archetype';
   success: boolean;
   duration: number; // milliseconds

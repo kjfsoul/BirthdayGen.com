@@ -1,0 +1,74 @@
+#!/bin/bash
+# Script to purge all Vercel environment variables
+
+echo "🗑️  Purging all Vercel environment variables..."
+
+# List of all env vars to remove
+ENV_VARS=(
+  "PEXELS_API_KEY"
+  "GOOGLE_OAUTH_REDIRECT_URI"
+  "GOOGLE_PEOPLE_SCOPES"
+  "GOOGLE_OAUTH_CLIENT_JSON_PATH"
+  "DATABASE_URL"
+  "NEXT_PUBLIC_STRIPE_PUBLIC_KEY"
+  "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
+  "NEXT_PUBLIC_SUPABASE_ID"
+  "NOTIFICATION_RECIPIENT"
+  "DAILY_REPORT_TIME"
+  "URGENT_CHECK_INTERVAL"
+  "N8N_API_KEY"
+  "GITHUB_PERSONAL_ACCESS_TOKEN"
+  "VITE_STRIPE_PUBLIC_KEY"
+  "STRIPE_SECRET_KEY"
+  "NODE_ENV"
+  "PORT"
+  "NEXT_PUBLIC_APP_URL"
+  "NEXT_PUBLIC_APP_NAME"
+  "REDIS_URL"
+  "GITHUB_OWNER"
+  "GITHUB_REPO"
+  "NASA_API_KEY"
+  "IPGEOLOCATION_API_KEY"
+  "SWISS_EPHEMERIS_API_KEY"
+  "FIRECRAWL_API_KEY"
+  "SEMGREP_APP_TOKEN"
+  "BRAVE_API_KEY"
+  "GOOGLE_MAPS_API_KEY"
+  "MCP_PROJECT_ROOT"
+  "EMAIL_USER"
+  "EMAIL_PASS"
+  "SUPABASE_ID"
+  "SUPABASE_SECRET_KEY"
+  "SUPABASE_PUBLISHABLE_KEY"
+  "SUPABASE_API_KEY"
+  "DASHSCOPE_API_KEY"
+  "GEMINI_API_KEY"
+  "OPENAI_API_KEY"
+  "GOOGLE_CLIENT_ID"
+  "GOOGLE_CLIENT_SECRET"
+  "PERPLEXITY_API_KEY"
+  "POSTGRES_URL"
+  "POSTGRES_PRISMA_URL"
+  "SUPABASE_URL"
+  "NEXT_PUBLIC_SUPABASE_URL"
+  "POSTGRES_URL_NON_POOLING"
+  "SUPABASE_JWT_SECRET"
+  "POSTGRES_USER"
+  "NEXT_PUBLIC_SUPABASE_ANON_KEY"
+  "POSTGRES_PASSWORD"
+  "POSTGRES_DATABASE"
+  "SUPABASE_SERVICE_ROLE_KEY"
+  "POSTGRES_HOST"
+  "SUPABASE_ANON_KEY"
+  "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY"
+)
+
+# Remove each env var from all environments
+for var in "${ENV_VARS[@]}"; do
+  echo "Removing $var..."
+  vercel env rm "$var" production --yes 2>/dev/null || true
+  vercel env rm "$var" preview --yes 2>/dev/null || true
+  vercel env rm "$var" development --yes 2>/dev/null || true
+done
+
+echo "✅ All environment variables purged!"

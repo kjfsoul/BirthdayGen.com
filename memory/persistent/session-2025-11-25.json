@@ -1,0 +1,15 @@
+{
+  "session_id": "session-YYYY-MM-DD-HHMMSS",
+  "date": "2025-11-25",
+  "branch": "main",
+  "commits_today": 0,
+  "areas": [],
+  "statuses": {},
+  "next": [],
+  "compliance": {
+    "protocol_read": false,
+    "proof_hash": "",
+    "proof_timestamp": "",
+    "provider_order": "localjson,supabase"
+  }
+}

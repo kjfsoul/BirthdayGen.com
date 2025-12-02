@@ -35,7 +35,7 @@ interface CardData {
 export default function CardPage() {
     const params = useParams()
     const router = useRouter()
-    const cardId = params.cardId as string
+    const cardId = params?.cardId as string
 
     const [cardData, setCardData] = useState<CardData | null>(null)
     const [loading, setLoading] = useState(true)

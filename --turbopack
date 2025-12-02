@@ -1,0 +1,69 @@
+[33m[nodemon] 3.1.11[39m
+[33m[nodemon] to restart at any time, enter `rs`[39m
+[33m[nodemon] watching path(s): server.ts src/**/*[39m
+[33m[nodemon] watching extensions: ts,tsx,js,jsx[39m
+[32m[nodemon] starting `npx tsx server.ts`[39m
+npm warn Unknown env config "verify-deps-before-run". This will stop working in the next major version of npm.
+npm warn Unknown env config "_jsr-registry". This will stop working in the next major version of npm.
+> Ready on http://localhost:3000
+> Socket.IO server running at ws://localhost:3000/api/socketio
+> Open your browser to http://localhost:3000
+ ○ Compiling / ...
+ ✓ Compiled / in 2.1s (2240 modules)
+ GET / 200 in 2816ms
+ ✓ Compiled in 743ms (1029 modules)
+ ○ Compiling /favicon.ico ...
+ ✓ Compiled /favicon.ico in 517ms (1228 modules)
+ GET /favicon.ico 200 in 655ms
+ GET /favicon.ico 200 in 663ms
+ GET / 200 in 249ms
+ GET /favicon.ico 200 in 7ms
+ ○ Compiling /auth ...
+ ✓ Compiled /auth in 542ms (2264 modules)
+ GET /auth 200 in 665ms
+ GET / 200 in 182ms
+ ○ Compiling /contacts ...
+ ✓ Compiled /contacts in 603ms (2353 modules)
+ GET /contacts 200 in 705ms
+ ○ Compiling /api/import/google/start ...
+ ✓ Compiled /api/import/google/start in 622ms (2575 modules)
+[/api/import/google/start] Cookies: 
+[/api/import/google/start] User: undefined Error: Auth session missing!
+ GET /api/import/google/start 307 in 967ms
+ GET /auth 200 in 447ms
+ GET / 200 in 97ms
+ ○ Compiling /blog ...
+ ✓ Compiled /blog in 724ms (2592 modules)
+ GET /blog?tag=holiday 200 in 901ms
+ GET /contacts 200 in 33ms
+[/api/import/google/start] Cookies: 
+[/api/import/google/start] User: undefined Error: Auth session missing!
+ GET /api/import/google/start 307 in 106ms
+ GET /auth 200 in 234ms
+ GET /auth 200 in 82ms
+ ○ Compiling /_not-found ...
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ✓ Compiled /_not-found in 1162ms (2343 modules)
+ GET /auth 404 in 1946ms
+ GET / 200 in 1116ms
+ GET / 200 in 172ms
+ GET / 200 in 73ms
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `npx tsx server.ts`[39m
+npm warn Unknown env config "verify-deps-before-run". This will stop working in the next major version of npm.
+npm warn Unknown env config "_jsr-registry". This will stop working in the next major version of npm.
+> Ready on http://localhost:3000
+> Socket.IO server running at ws://localhost:3000/api/socketio
+> Open your browser to http://localhost:3000
+ ○ Compiling /auth ...
+ ✓ Compiled /auth in 2.2s (1054 modules)
+ GET /auth 200 in 2854ms
+ ✓ Compiled in 643ms (439 modules)
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `npx tsx server.ts`[39m
+npm warn Unknown env config "verify-deps-before-run". This will stop working in the next major version of npm.
+npm warn Unknown env config "_jsr-registry". This will stop working in the next major version of npm.
+> Ready on http://localhost:3000
+> Socket.IO server running at ws://localhost:3000/api/socketio
+> Open your browser to http://localhost:3000
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m

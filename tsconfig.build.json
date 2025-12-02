@@ -5,6 +5,7 @@
     "src/components/__tests__",
     "**/*.test.ts",
     "**/*.test.tsx",
-    "**/__tests__/**"
+    "**/__tests__/**",
+    "supabase"
   ]
 }

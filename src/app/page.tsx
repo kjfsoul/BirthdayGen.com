@@ -1,6 +1,6 @@
 "use client";
-import Link from 'next/link'
-import { useState } from 'react'
+import React, { useState, Suspense } from 'react'
+import { Link } from 'react-router-dom'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -22,10 +22,10 @@ import {
 } from "lucide-react"
 import { NewsletterSignup } from './components/NewsletterSignup'
 import { trackEvent } from '@/lib/analytics'
-import dynamic from "next/dynamic";
 
-const HolidayScene = dynamic(() => import("../components/holiday/HolidayScene").then(mod => mod.HolidayScene), { ssr: false });
-const AddContactsCTA = dynamic(() => import("../components/contacts/AddContactsCTA"));
+// Lazy load components
+const HolidayScene = React.lazy(() => import("../components/holiday/HolidayScene").then(mod => ({ default: mod.HolidayScene })));
+const AddContactsCTA = React.lazy(() => import("../components/contacts/AddContactsCTA"));
 
 export default function Home() {
   const [isCTADialogOpen, setIsCTADialogOpen] = useState(false)
@@ -77,10 +77,13 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative">
+      <Suspense fallback={null}>
+        <HolidayScene className="pointer-events-none opacity-60" />
+      </Suspense>
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 pt-20 pb-16 px-4 overflow-hidden">
-        <div className="absolute inset-0 bg-[url('/hero-pattern.svg')] opacity-5"></div>
+      <section className="relative bg-transparent pt-20 pb-16 px-4 overflow-hidden">
+
         <div className="max-w-7xl mx-auto text-center relative">
           <Badge className="bg-gradient-to-r from-pink-500 to-purple-600 text-white mb-6 text-lg px-4 py-2">
             <Sparkles className="h-5 w-5 mr-2" />
@@ -100,13 +103,13 @@ export default function Home() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Button size="lg" className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white text-lg px-8 py-4" asChild>
-              <Link href="/auth">
+              <Link to="/auth">
                 <Wand2 className="h-5 w-5 mr-2" />
                 Sign up free
               </Link>
             </Button>
             <Button size="lg" variant="outline" className="text-lg px-8 py-4 border-purple-300 text-purple-600 hover:bg-purple-50" asChild>
-              <Link href="/blog?tag=holiday">
+              <Link to="/blog?tag=holiday">
                 <Search className="h-5 w-5 mr-2" />
                 Explore ideas
               </Link>
@@ -128,7 +131,9 @@ export default function Home() {
         </div>
       </section>
 
-      <AddContactsCTA />
+      <Suspense fallback={null}>
+        <AddContactsCTA />
+      </Suspense>
 
       {/* Add Contacts CTA */}
       <section className="py-16 px-4 bg-white">
@@ -171,7 +176,7 @@ export default function Home() {
                         <Input type="file" accept=".vcf" />
                       </div>
                       <div className="text-center">
-                        <Link href="/help/carddav" className="text-purple-600 hover:underline">
+                        <Link to="/help/carddav" className="text-purple-600 hover:underline">
                           Use CardDAV (advanced)
                         </Link>
                       </div>
@@ -247,10 +252,10 @@ export default function Home() {
 
           <div className="grid md:grid-cols-3 gap-8">
             {tools.map((tool, index) => (
-              <Link key={tool.href} href={tool.href}>
+              <Link key={tool.href} to={tool.href}>
                 <Card className="h-full hover:shadow-xl transition-all duration-300 cursor-pointer group border-0 shadow-lg">
                   <CardHeader>
-                    <div className={`w-16 h-16 rounded-xl bg-gradient-to-r ${tool.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                    <div className={`w - 16 h - 16 rounded - xl bg - gradient - to - r ${tool.color} flex items - center justify - center mb - 4 group - hover: scale - 110 transition - transform`}>
                       <tool.icon className="h-8 w-8 text-white" />
                     </div>
                     <CardTitle className="text-xl mb-2 text-gray-900 group-hover:text-purple-600 transition-colors">{tool.title}</CardTitle>
@@ -288,7 +293,7 @@ export default function Home() {
                 <Badge className="mb-3">Holiday Tips</Badge>
                 <h3 className="text-xl font-semibold mb-2">10 Holiday Birthday Ideas</h3>
                 <p className="text-gray-600 mb-4">Make this holiday season unforgettable with these creative birthday celebration ideas.</p>
-                <Link href="/blog/holiday-birthday-ideas" className="text-purple-600 font-medium hover:underline">
+                <Link to="/blog/holiday-birthday-ideas" className="text-purple-600 font-medium hover:underline">
                   Read more →
                 </Link>
               </CardContent>
@@ -299,7 +304,7 @@ export default function Home() {
                 <Badge className="mb-3">Party Planning</Badge>
                 <h3 className="text-xl font-semibold mb-2">Winter Wonderland Parties</h3>
                 <p className="text-gray-600 mb-4">Transform your home into a magical winter wonderland for the perfect birthday party.</p>
-                <Link href="/blog/winter-wonderland-parties" className="text-purple-600 font-medium hover:underline">
+                <Link to="/blog/winter-wonderland-parties" className="text-purple-600 font-medium hover:underline">
                   Read more →
                 </Link>
               </CardContent>
@@ -310,7 +315,7 @@ export default function Home() {
                 <Badge className="mb-3">Gift Ideas</Badge>
                 <h3 className="text-xl font-semibold mb-2">Thoughtful Holiday Gifts</h3>
                 <p className="text-gray-600 mb-4">Discover meaningful gifts that show you care this holiday season.</p>
-                <Link href="/blog/thoughtful-holiday-gifts" className="text-purple-600 font-medium hover:underline">
+                <Link to="/blog/thoughtful-holiday-gifts" className="text-purple-600 font-medium hover:underline">
                   Read more →
                 </Link>
               </CardContent>

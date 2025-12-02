@@ -1,0 +1,62 @@
+# Build outputs
+.next/
+out/
+build/
+dist/
+
+# Dependencies
+node_modules/
+
+# Config files
+*.config.ts
+*.config.js
+*.config.mjs
+*.config.cjs
+jest.config.ts
+next-env.d.ts
+
+# Non-source directories
+scripts/
+docs/
+logs/
+.agent/
+.cursor/
+.beads/
+.git/
+.vercel/
+.roo/
+.kilocode/
+.clinerules/
+memory/
+prisma/
+supabase/
+public/
+pages/
+examples/
+jules-scratch/
+prompts/
+
+# Generated files
+*.tsbuildinfo
+global.d.ts
+
+# Lock files and logs
+*.log
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Markdown and docs
+*.md
+*.pdf
+*.html
+
+# Server file (custom server)
+server.ts
+
+# Tailwind config (uses module.exports)
+tailwind.config.ts
+postcss.config.mjs
+
+# Component config
+components.json

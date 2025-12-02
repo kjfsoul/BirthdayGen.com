@@ -1,145 +1,88 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Gift,
-  Sparkles,
-  ShoppingBag,
-  Compass,
-  Gem,
-  HandHeart,
-  Rocket
-} from "lucide-react"
-import { ComingSoonWaitlist } from "../components/ComingSoonWaitlist"
+import React from 'react';
+import { GiftGrid } from '@/components/gifts/GiftGrid';
+import { AIGiftFinder } from '@/components/gifts/AIGiftFinder';
+import { Gift } from 'lucide-react';
 
-const advantages = [
+// Mock data for MVP
+const FEATURED_GIFTS = [
   {
-    icon: Sparkles,
-    title: "AI-Personalized Gift Ideas",
-    description:
-      "Tell us about the person and we’ll deliver curated recommendations matched to their aura, interests, and budget."
+    id: 1,
+    title: "Aura Crystal Set",
+    description: "Balance your energy with this curated set of healing crystals.",
+    image_url: "https://images.unsplash.com/photo-1515377905703-c4788e51af15?q=80&w=2070&auto=format&fit=crop",
+    price: 45.00,
+    buy_url: "#",
+    category: "Wellness",
+    featured: true
   },
   {
-    icon: Compass,
-    title: "Guided Gift Journeys",
-    description:
-      "Browse by vibe, milestone, or relationship and discover ideas you would never find scrolling generic lists."
+    id: 2,
+    title: "Custom Star Map",
+    description: "A beautiful print of the night sky on their special day.",
+    image_url: "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=2070&auto=format&fit=crop",
+    price: 60.00,
+    buy_url: "#",
+    category: "Decor",
+    featured: true
   },
   {
-    icon: ShoppingBag,
-    title: "Affiliate-Friendly Shortlists",
-    description:
-      "One-click save to wishlist, price tracking, and compliant affiliate links for teams and corporate gifting."
+    id: 3,
+    title: "Aromatherapy Diffuser",
+    description: "Fill their home with calming scents and soft light.",
+    image_url: "https://images.unsplash.com/photo-1602928321679-560bb453f190?q=80&w=2070&auto=format&fit=crop",
+    price: 35.00,
+    buy_url: "#",
+    category: "Wellness",
+    featured: true
+  },
+  {
+    id: 4,
+    title: "Gourmet Chocolate Box",
+    description: "Handcrafted chocolates for the sweet tooth.",
+    image_url: "https://images.unsplash.com/photo-1549007994-cb92caebd54b?q=80&w=2070&auto=format&fit=crop",
+    price: 25.00,
+    buy_url: "#",
+    category: "Food",
+    featured: true
   }
-]
+];
 
-const categories = [
-  { name: "Radiant & Glam", icon: Gem },
-  { name: "Adventurous Spirits", icon: Rocket },
-  { name: "Heartfelt Keepsakes", icon: HandHeart },
-  { name: "Wellness & Self-Care", icon: Gift },
-  { name: "Creative Makers", icon: Sparkles },
-  { name: "Tech & Gadgets", icon: ShoppingBag }
-]
-
-export default function GiftGuideComingSoonPage() {
+export default function GiftGuidePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-teal-50 to-emerald-50 py-16 px-4">
-      <div className="mx-auto flex max-w-5xl flex-col gap-16">
-        <section className="relative overflow-hidden rounded-3xl bg-white/90 p-10 shadow-xl backdrop-blur">
-          <div className="absolute inset-0 bg-[url('/hero-pattern.svg')] opacity-5" />
-          <div className="relative space-y-8 text-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-green-500 to-teal-600 px-5 py-2 text-sm font-semibold text-white shadow-lg">
-              <Gift className="h-4 w-4" />
-              Gift Guide Waitlist Now Open
-            </div>
+    <main className="min-h-screen bg-gray-50 pb-20">
+      {/* Hero Section */}
+      <section className="relative bg-purple-900 text-white py-20 overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=2807&auto=format&fit=crop')] bg-cover bg-center opacity-20"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-purple-900/90"></div>
 
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-              Gift Guide Launching Soon
-            </h1>
-
-            <p className="mx-auto max-w-2xl text-lg text-gray-600">
-              Discover perfect presents with real-time AI guidance, curated catalogs, and shareable wishlists. Be the
-              first to access the tools the BirthdayGen.com team uses for unforgettable gifts.
-            </p>
-
-            <ComingSoonWaitlist
-              productName="Gift Guide"
-              buttonLabel="Join the Waitlist"
-              placeholder="Enter your email to get early access"
-              className="mx-auto max-w-2xl"
-            />
-
-            <p className="text-sm text-gray-500">
-              Early invitees will receive exclusive launch perks and curated holiday gift playbooks.
-            </p>
-
-            <div className="flex justify-center">
-              <Link href="/generator">
-                <Button variant="outline" className="text-emerald-600">
-                  Back to Card Maker
-                </Button>
-              </Link>
-            </div>
+        <div className="container mx-auto px-4 relative z-10 text-center">
+          <div className="inline-flex items-center justify-center p-3 bg-white/10 backdrop-blur-sm rounded-full mb-6 border border-white/20">
+            <Gift className="h-6 w-6 mr-2 text-pink-300" />
+            <span className="font-medium text-pink-100">The Ultimate Gift Guide</span>
           </div>
-        </section>
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 tracking-tight">
+            Find the <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400">Perfect Gift</span>
+            <br /> for Every Aura
+          </h1>
+          <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-10">
+            Stop guessing. Use our AI-powered engine to discover personalized gifts based on personality, interests, and relationship.
+          </p>
+        </div>
+      </section>
 
-        <section className="space-y-8">
-          <div className="flex items-center gap-3">
-            <Sparkles className="h-6 w-6 text-emerald-600" />
-            <h2 className="text-2xl font-semibold text-gray-900">
-              Personalized gifting intelligence for every relationship
-            </h2>
-          </div>
+      {/* AI Finder Section */}
+      <section className="container mx-auto px-4 -mt-10 relative z-20 mb-20">
+        <AIGiftFinder />
+      </section>
 
-          <div className="grid gap-6 md:grid-cols-3">
-            {advantages.map((item) => (
-              <Card key={item.title} className="border-none bg-white/85 shadow-lg backdrop-blur">
-                <CardHeader className="space-y-3">
-                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-r from-green-500 to-teal-600 text-white shadow">
-                    <item.icon className="h-6 w-6" />
-                  </div>
-                  <CardTitle className="text-xl text-gray-900">{item.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm text-gray-600">{item.description}</CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
+      {/* Featured Gifts Section */}
+      <section className="container mx-auto px-4">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-3xl font-bold text-gray-900">Trending Gifts</h2>
+        </div>
 
-        <section className="rounded-3xl border border-emerald-100 bg-white/90 p-10 shadow-lg backdrop-blur">
-          <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-            <div className="space-y-3 md:max-w-sm">
-              <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-sm font-medium text-emerald-600">
-                <Gem className="h-4 w-4" />
-                Curated Collections
-              </div>
-              <h3 className="text-2xl font-semibold text-gray-900">
-                Preview the categories we&rsquo;re crafting right now
-              </h3>
-              <p className="text-gray-600">
-                From milestone birthdays to meaningful thank-yous, every collection is researched, tested, and
-                continuously updated.
-              </p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {categories.map((category) => (
-                <Card
-                  key={category.name}
-                  className="border border-emerald-100 bg-white/95 shadow-md transition hover:-translate-y-1 hover:shadow-lg"
-                >
-                  <CardContent className="flex items-center gap-3 py-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-                      <category.icon className="h-5 w-5" />
-                    </div>
-                    <span className="text-sm font-medium text-gray-700">{category.name}</span>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
-      </div>
-    </div>
-  )
+        <GiftGrid gifts={FEATURED_GIFTS} />
+      </section>
+    </main>
+  );
 }

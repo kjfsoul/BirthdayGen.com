@@ -104,3 +104,5 @@ Thumbs.db
 .augment/rules/byterover-rules.md
 core
 logs/
+supabase/.temp/
+.beads-ids/

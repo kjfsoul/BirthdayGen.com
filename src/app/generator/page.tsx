@@ -17,6 +17,8 @@ import {
   Star,
   Wand2
 } from "lucide-react"
+import { SendCardDialog } from "@/components/card/SendCardDialog"
+import { supabase } from "@/lib/supabase/client"
 
 export default function CardGeneratorPage() {
   const [selectedTemplate, setSelectedTemplate] = useState('birthday-blast')
@@ -74,14 +76,45 @@ export default function CardGeneratorPage() {
     }
   ]
 
-  const generateCard = () => {
-    console.log('Generating card with:', {
-      template: selectedTemplate,
-      recipient: recipientName,
-      sender: senderName,
-      message: customMessage,
-      colors: selectedColors
-    })
+  const [generatedCardId, setGeneratedCardId] = useState<number | null>(null)
+  const [isGenerating, setIsGenerating] = useState(false)
+
+  // Import supabase at top level (I will add the import in a separate tool call to avoid lint errors)
+
+  const generateCard = async () => {
+    setIsGenerating(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+
+      const { data, error } = await supabase
+        .from('cards')
+        .insert({
+          user_id: user?.id, // Can be null for guest
+          title: 'Happy Birthday!',
+          message: customMessage,
+          template: selectedTemplate,
+          background_style: selectedColors.primary, // Using primary color as style proxy for now
+          text_style: 'font-sans', // Default
+          elements: {
+            recipientName,
+            senderName,
+            colors: selectedColors
+          },
+          status: 'draft'
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      console.log('Card generated:', data)
+      setGeneratedCardId(data.id)
+    } catch (error) {
+      console.error('Error generating card:', error)
+      // TODO: Show error toast
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   return (
@@ -118,11 +151,10 @@ export default function CardGeneratorPage() {
                   <div
                     key={template.id}
                     onClick={() => setSelectedTemplate(template.id)}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                      selectedTemplate === template.id
-                        ? 'border-orange-500 bg-orange-50'
-                        : 'border-gray-200 hover:border-pink-300'
-                    }`}
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedTemplate === template.id
+                      ? 'border-orange-500 bg-orange-50'
+                      : 'border-gray-200 hover:border-pink-300'
+                      }`}
                   >
                     <div className="flex items-center space-x-3">
                       <div className={`p-2 rounded-lg ${template.gradient} text-white`}>
@@ -190,11 +222,10 @@ export default function CardGeneratorPage() {
                       secondary: palette.secondary,
                       accent: palette.accent
                     })}
-                    className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                      selectedColors.primary === palette.primary
-                        ? 'border-orange-500 bg-orange-50'
-                        : 'border-gray-200 hover:border-pink-300'
-                    }`}
+                    className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${selectedColors.primary === palette.primary
+                      ? 'border-orange-500 bg-orange-50'
+                      : 'border-gray-200 hover:border-pink-300'
+                      }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-medium">{palette.name}</span>
@@ -233,10 +264,15 @@ export default function CardGeneratorPage() {
                       <Download className="h-4 w-4 mr-2" />
                       Download
                     </Button>
-                    <Button size="sm" variant="outline">
-                      <Share2 className="h-4 w-4 mr-2" />
-                      Share
-                    </Button>
+                    <SendCardDialog
+                      cardId={generatedCardId}
+                      trigger={
+                        <Button size="sm" variant="outline" disabled={!generatedCardId}>
+                          <Share2 className="h-4 w-4 mr-2" />
+                          Send
+                        </Button>
+                      }
+                    />
                   </div>
                 </CardTitle>
               </CardHeader>
@@ -287,11 +323,16 @@ export default function CardGeneratorPage() {
                   <Button
                     onClick={generateCard}
                     size="lg"
+                    disabled={isGenerating}
                     className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white text-lg px-8 py-3"
                   >
                     <div className="flex items-center space-x-2">
-                      <Wand2 className="h-5 w-5" />
-                      <span>Generate Animated Card</span>
+                      {isGenerating ? (
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      ) : (
+                        <Wand2 className="h-5 w-5" />
+                      )}
+                      <span>{isGenerating ? 'Generating...' : 'Generate Animated Card'}</span>
                     </div>
                   </Button>
                 </div>

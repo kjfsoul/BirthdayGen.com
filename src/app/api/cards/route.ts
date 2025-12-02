@@ -8,13 +8,13 @@ const Body = z.object({
   styles: z.object({
     backgroundColor: z.string().regex(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i),
     textColor: z.string().regex(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i),
-    fontFamily: z.enum(['system','inter','poppins','montserrat','nunito','lora','playfair','merriweather','dmserif','caveat']),
+    fontFamily: z.enum(['system', 'inter', 'poppins', 'montserrat', 'nunito', 'lora', 'playfair', 'merriweather', 'dmserif', 'caveat']),
     fontSize: z.number().int().min(10).max(96),
-    textAlign: z.enum(['left','center','right']).optional()
+    textAlign: z.enum(['left', 'center', 'right']).optional()
   }),
   media: z.object({
     imageUrl: z.string().url().optional(),
-    layout: z.enum(['square','portrait','landscape']).optional()
+    layout: z.enum(['square', 'portrait', 'landscape']).optional()
   }).optional(),
   meta: z.object({
     occasion: z.string().optional(),

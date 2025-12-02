@@ -1,22 +1,24 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu, Search, User, Heart, LogOut } from "lucide-react"
+import { Menu, Search, User as UserIcon, Heart, LogOut } from "lucide-react"
 import { NavMenu } from './NavMenu'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase/client'
 import { useToast } from '@/hooks/use-toast'
+
+import { User as SupabaseUser } from '@supabase/supabase-js'
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<SupabaseUser | null>(null)
   const [loading, setLoading] = useState(true)
-  const pathname = usePathname()
-  const router = useRouter()
+  const location = useLocation()
+  const pathname = location.pathname
+  const navigate = useNavigate()
   const { toast } = useToast()
 
   useEffect(() => {
@@ -30,9 +32,14 @@ export function Header() {
   useEffect(() => {
     // Get initial session
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user ?? null)
-      setLoading(false)
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        setUser(session?.user ?? null)
+      } catch (error) {
+        console.error('Error fetching session:', error)
+      } finally {
+        setLoading(false)
+      }
     }
 
     getSession()
@@ -42,11 +49,14 @@ export function Header() {
       async (event, session) => {
         setUser(session?.user ?? null)
         setLoading(false)
+        if (event === 'SIGNED_OUT') {
+          navigate(0) // Refresh page
+        }
       }
     )
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, [navigate])
 
 
 
@@ -63,7 +73,7 @@ export function Header() {
         title: "Signed out",
         description: "You have been signed out successfully.",
       })
-      router.push('/')
+      navigate('/')
     }
   }
 
@@ -82,7 +92,7 @@ export function Header() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
+            <Link to="/" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-purple-600 rounded-lg flex items-center justify-center">
                 <Heart className="h-5 w-5 text-white" />
               </div>
@@ -93,7 +103,7 @@ export function Header() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <Link
-              href="/generator"
+              to="/generator"
               className={`text-sm font-medium transition-colors ${isActive('/generator')
                 ? 'text-purple-600'
                 : 'text-gray-700 hover:text-purple-600'
@@ -102,7 +112,7 @@ export function Header() {
               Card Maker
             </Link>
             <Link
-              href="/party-planner"
+              to="/party-planner"
               className={`text-sm font-medium transition-colors ${isActive('/party-planner')
                 ? 'text-purple-600'
                 : 'text-gray-700 hover:text-purple-600'
@@ -111,7 +121,7 @@ export function Header() {
               Party Planner
             </Link>
             <Link
-              href="/gifts"
+              to="/gifts"
               className={`text-sm font-medium transition-colors ${isActive('/gifts')
                 ? 'text-purple-600'
                 : 'text-gray-700 hover:text-purple-600'
@@ -120,7 +130,7 @@ export function Header() {
               Gift Guide
             </Link>
             <Link
-              href="/blog"
+              to="/blog"
               className={`text-sm font-medium transition-colors ${isActive('/blog')
                 ? 'text-purple-600'
                 : 'text-gray-700 hover:text-purple-600'
@@ -140,9 +150,9 @@ export function Header() {
               <div className="w-8 h-8 animate-spin rounded-full border-2 border-purple-600 border-t-transparent" />
             ) : user ? (
               <div className="flex items-center space-x-2">
-                <Link href="/contacts">
+                <Link to="/contacts">
                   <Button variant="ghost" size="sm">
-                    <User className="h-4 w-4 mr-2" />
+                    <UserIcon className="h-4 w-4 mr-2" />
                     Dashboard
                   </Button>
                 </Link>
@@ -154,13 +164,13 @@ export function Header() {
             ) : (
               <>
                 <Button variant="ghost" size="sm" asChild>
-                  <Link href="/auth">
-                    <User className="h-4 w-4 mr-2" />
+                  <Link to="/auth">
+                    <UserIcon className="h-4 w-4 mr-2" />
                     Sign in
                   </Link>
                 </Button>
                 <Button size="sm" className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white" asChild>
-                  <Link href="/auth">
+                  <Link to="/auth">
                     Sign up free
                   </Link>
                 </Button>

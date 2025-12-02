@@ -206,26 +206,26 @@ model PartyExpense {
 
 **Task 2.2: Party Event CRUD** (2 days)
 
-- API routes: POST, GET, PUT, DELETE `/api/parties`
+- Edge Functions: POST, GET, PUT, DELETE `/api/parties`
 - UI: Dashboard, detail view, create dialog
 - State management: useParties, useParty hooks
 - Testing
 
 **Task 2.3: Guest Management** (1 day)
 
-- API routes for guests
+- Edge Functions for guests
 - UI: Guest list, add guest dialog, RSVP tracker
 - Contact integration (import from contacts)
 
 **Task 2.4: Task Checklist** (1 day)
 
-- API routes for tasks
+- Edge Functions for tasks
 - UI: Task checklist, timeline view
 - Auto-generate default tasks
 
 **Task 2.5: Budget Tracker** (1 day)
 
-- API routes for expenses
+- Edge Functions for expenses
 - UI: Budget tracker, expense list
 - Analytics: total vs spent, category breakdown
 
@@ -351,7 +351,7 @@ model GiftRecommendation {
 
 - Pages: `/gifts` (listing), `/gifts/[id]` (details)
 - Components: GiftCard, GiftGrid, GiftFilter, GiftSearch
-- API routes: GET `/api/gifts`, GET `/api/gifts/[id]`
+- Edge Functions: GET `/api/gifts`, GET `/api/gifts/[id]`
 - State management: useGifts, useGiftSearch hooks
 
 **Task 3.3: AI Gift Recommendations** (2 days)
@@ -364,7 +364,7 @@ model GiftRecommendation {
 
 **Task 3.4: Wishlist Feature** (1 day)
 
-- API routes for wishlists
+- Edge Functions for wishlists
 - UI: Wishlist page, AddToWishlist button
 - Features: create, add gifts, mark purchased
 
@@ -491,7 +491,7 @@ model BlogPostTag {
 
 - Pages: `/blog`, `/blog/[slug]`, `/blog/category/[slug]`
 - Components: BlogPostCard, BlogPostGrid, BlogPostContent
-- API routes: GET `/api/blog`, GET `/api/blog/[slug]`
+- Edge Functions: GET `/api/blog`, GET `/api/blog/[slug]`
 - State management: useBlogPosts, useBlogPost hooks
 
 **Task 4.3: Blog Admin/CMS** (2 days)
@@ -499,7 +499,7 @@ model BlogPostTag {
 - Admin pages: list, new, edit
 - Rich text editor (TipTap)
 - Image upload support
-- Admin API routes: POST, PUT, DELETE
+- Admin Edge Functions: POST, PUT, DELETE
 - Access control (admin-only)
 
 **Task 4.4: SEO & Metadata** (1 day)
@@ -558,7 +558,7 @@ model BlogPostTag {
 **Task 5.2: Automation Rules Engine** (3 days)
 
 - Database schema for automation rules
-- API routes for rules CRUD
+- Edge Functions for rules CRUD
 - Scheduling logic (cron jobs)
 - Birthday detection and triggering
 - Retry and failure handling
@@ -655,7 +655,7 @@ model ShowcaseLike {
 
 - Page: `/showcase`
 - Components: ShowcaseGrid, ShowcaseCard, ShowcaseFilters
-- API routes: GET `/api/showcase`
+- Edge Functions: GET `/api/showcase`
 - Like/unlike functionality
 
 **Task 6.3: Publish to Showcase** (1 day)
@@ -811,7 +811,7 @@ model InspirationFavorite {
 - Page: `/inspiration`
 - Components: InspirationGrid, InspirationCard
 - Category filters
-- API routes
+- Edge Functions
 
 **Task 8.3: Favorites & Sharing** (0.5 days)
 
@@ -964,7 +964,7 @@ See Feature 5 for complete breakout.
 - Service layer tests (100% coverage)
 - Critical component tests
 - Integration tests for user journeys
-- API route tests
+- Edge Function tests
 - CI/CD integration
 
 **Task 13.2: E2E Test Suite** (3 days) [P1]

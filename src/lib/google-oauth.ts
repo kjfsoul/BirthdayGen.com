@@ -4,7 +4,6 @@ import { OAuth2Client } from "google-auth-library";
 
 const DEFAULT_SCOPES = [
   "https://www.googleapis.com/auth/contacts.readonly",
-  "https://www.googleapis.com/auth/contacts.other.readonly",
 ];
 
 type GoogleClientJson = {

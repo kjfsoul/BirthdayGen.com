@@ -42,7 +42,7 @@ export default function PartyPlannerComingSoonPage() {
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 py-16 px-4">
       <div className="mx-auto flex max-w-5xl flex-col gap-16">
         <section className="relative overflow-hidden rounded-3xl bg-white/90 p-10 shadow-xl backdrop-blur">
-          <div className="absolute inset-0 bg-[url('/hero-pattern.svg')] opacity-5" />
+
           <div className="relative space-y-8 text-center">
             <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 px-5 py-2 text-sm font-semibold text-white shadow-lg">
               <Sparkles className="h-4 w-4" />

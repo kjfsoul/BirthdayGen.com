@@ -29,7 +29,7 @@ export function ContactList() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [search, setSearch] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedMonth, setSelectedMonth] = useState<string>('');
+  const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [newCategoryName, setNewCategoryName] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -72,7 +72,7 @@ export function ContactList() {
       selectedCategories.length === 0 ||
       selectedCategories.every(catId => contact.categoryIds.includes(catId));
     const monthMatch =
-      !selectedMonth ||
+      !selectedMonth || selectedMonth === 'all' ||
       (contact.birthday && new Date(contact.birthday).getMonth() === parseInt(selectedMonth, 10) - 1);
     return searchMatch && categoryMatch && monthMatch;
   });
@@ -149,7 +149,7 @@ export function ContactList() {
             <SelectValue placeholder="All months" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All months</SelectItem>
+            <SelectItem value="all">All months</SelectItem>
             {Array.from({ length: 12 }, (_, i) => (
               <SelectItem key={i + 1} value={(i + 1).toString()}>
                 {new Date(0, i).toLocaleString('default', { month: 'long' })}

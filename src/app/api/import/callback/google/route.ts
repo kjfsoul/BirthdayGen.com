@@ -7,6 +7,8 @@ import { createClient } from '@/lib/supabase/server';
 import { db } from '@/lib/db';
 
 export const runtime = 'nodejs';
+// Force dynamic rendering so request‑level cookies are available
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
@@ -21,13 +23,16 @@ export async function GET(req: NextRequest) {
 
   const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!session) {
-    return new Response('Unauthorized', { status: 401 });
+  // If there is no Supabase session, redirect the user to the sign‑in page
+  if (!user) {
+    console.warn('Google import callback: no Supabase session – redirecting to /auth');
+    const loginUrl = new URL('/auth', req.url);
+    return NextResponse.redirect(loginUrl);
   }
-  const userId = session.user.id;
+  const userId = user.id;
 
   const client = getGoogleOAuthClient();
   const { tokens } = await client.getToken(code);
@@ -87,9 +92,11 @@ export async function GET(req: NextRequest) {
     }
   } catch (error) {
     console.error('Error importing google contacts', error);
+    // Preserve the original redirect target but add an error flag
     const redirectUrl = new URL('/contacts', req.url);
     redirectUrl.searchParams.set('error', 'google-import-failed');
     return NextResponse.redirect(redirectUrl);
+
   }
 
   const redirectUrl = new URL('/contacts', req.url);
