@@ -1,5 +1,6 @@
 'use client';
 
+/* eslint-disable no-console */
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Environment, Sparkles, Stars, Cloud, Float } from '@react-three/drei';
 import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
@@ -14,9 +15,26 @@ export function HolidayScene({ className }: HolidaySceneProps) {
     <div className={`fixed inset-0 -z-10 ${className}`}>
       <Canvas
         camera={{ position: [0, 0, 8], fov: 60 }}
-        gl={{ alpha: true, antialias: false }} // Disable antialias for postprocessing performance
+        gl={{
+          alpha: true,
+          antialias: false, // Disable antialias for postprocessing performance
+          preserveDrawingBuffer: true, // Prevent context loss
+          powerPreference: 'high-performance',
+          failIfMajorPerformanceCaveat: false
+        }}
         dpr={[1, 1.5]} // Limit pixel ratio for performance
         style={{ background: 'linear-gradient(to bottom, #020617, #1e1b4b, #4c1d95)' }}
+        onCreated={({ gl }) => {
+          // Handle WebGL context loss
+          const canvas = gl.domElement
+          canvas.addEventListener('webglcontextlost', (e) => {
+            e.preventDefault()
+            console.warn('WebGL context lost, attempting recovery...')
+          })
+          canvas.addEventListener('webglcontextrestored', () => {
+            console.log('WebGL context restored')
+          })
+        }}
       >
         {/* Lighting */}
         <ambientLight intensity={0.2} />

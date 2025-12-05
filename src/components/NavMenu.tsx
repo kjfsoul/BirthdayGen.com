@@ -1,7 +1,7 @@
 'use client'
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+
+import { Link, useLocation } from 'react-router-dom'
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 
@@ -10,7 +10,8 @@ interface NavMenuProps {
 }
 
 export function NavMenu({ onClose }: NavMenuProps) {
-  const pathname = usePathname()
+  const location = useLocation()
+  const pathname = location.pathname
 
   const isActive = (href: string) => pathname === href
 
@@ -29,7 +30,7 @@ export function NavMenu({ onClose }: NavMenuProps) {
         {navItems.map((item) => (
           <Link
             key={item.href}
-            href={item.href}
+            to={item.href}
             onClick={onClose}
             className={`px-4 py-2 text-lg font-medium rounded-md transition-colors ${isActive(item.href)
               ? 'bg-purple-100 text-purple-700'
@@ -45,12 +46,12 @@ export function NavMenu({ onClose }: NavMenuProps) {
 
       <div className="flex flex-col space-y-2">
         <Button variant="outline" className="w-full justify-start" asChild>
-          <Link href="/auth">
+          <Link to="/auth">
             Sign in
           </Link>
         </Button>
         <Button className="w-full justify-start bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700" asChild>
-          <Link href="/auth">
+          <Link to="/auth">
             Sign up free
           </Link>
         </Button>

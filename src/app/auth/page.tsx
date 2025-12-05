@@ -1,7 +1,8 @@
+/* eslint-disable no-console */
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase/client'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,7 +21,7 @@ import {
   EyeOff,
   AlertCircle
 } from "lucide-react"
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 
 export default function AuthPage() {
   const [mode, setMode] = useState<'signin' | 'signup'>('signup')
@@ -34,7 +35,33 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  const router = useRouter()
+  const [checkingSession, setCheckingSession] = useState(true)
+  const navigate = useNavigate()
+
+  // Check if already logged in and redirect
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        // Already logged in, redirect to home
+        navigate('/', { replace: true })
+      } else {
+        setCheckingSession(false)
+      }
+    }
+    checkSession()
+
+    // Also listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          navigate('/', { replace: true })
+        }
+      }
+    )
+
+    return () => subscription.unsubscribe()
+  }, [navigate])
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -104,7 +131,7 @@ export default function AuthPage() {
       if (error) {
         setError(error.message)
       } else {
-        router.push('/')
+        navigate('/')
       }
     }
 
@@ -116,6 +143,18 @@ export default function AuthPage() {
     { icon: Heart, text: 'Never forget important dates' },
     { icon: Gift, text: 'Personalized gift recommendations' }
   ]
+
+  // Show loading while checking session
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
@@ -292,10 +331,8 @@ export default function AuthPage() {
 
               {mode === 'signin' && (
                 <div className="text-center text-sm">
-                  <Link href="/auth/forgot-password" passHref>
-                    <button className="font-medium text-purple-600 hover:text-purple-700 transition-colors">
-                      Forgot password?
-                    </button>
+                  <Link to="/auth/forgot-password" className="font-medium text-purple-600 hover:text-purple-700 transition-colors">
+                    Forgot password?
                   </Link>
                 </div>
               )}

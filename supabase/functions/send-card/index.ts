@@ -36,8 +36,27 @@ serve(async (req) => {
             throw new Error('Card not found')
         }
 
+        const resendApiKey = Deno.env.get('RESEND_API_KEY')
+
+        // Mock send if no API key (for dev/testing)
+        if (!resendApiKey) {
+            console.log('Mocking email send (RESEND_API_KEY not set)')
+            await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate delay
+
+            // Update card status
+            await supabase
+                .from('cards')
+                .update({ status: 'sent', sent_at: new Date().toISOString() })
+                .eq('id', cardId)
+
+            return new Response(
+                JSON.stringify({ success: true, id: 'mock-email-id', mock: true }),
+                { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+        }
+
         // 2. Send email via Resend
-        const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
+        const resend = new Resend(resendApiKey)
 
         const { data: emailData, error: emailError } = await resend.emails.send({
             from: 'BirthdayGen <onboarding@resend.dev>', // Use verified domain in prod
@@ -47,7 +66,7 @@ serve(async (req) => {
         <h1>Someone sent you a card!</h1>
         <p>${message || "Hope you have a great day!"}</p>
         <p>Click below to view it:</p>
-        <a href="${Deno.env.get('PUBLIC_SITE_URL')}/view/${card.id}">View Card</a>
+        <a href="${Deno.env.get('PUBLIC_SITE_URL') ?? 'http://localhost:3000'}/view/${card.id}">View Card</a>
       `,
         })
 

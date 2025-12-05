@@ -1,7 +1,7 @@
 /**
  * Unit Tests for Auto-Populate Enrichment Logic
  * Phase 2 - BirthdayGen.com
- * 
+ *
  * Tests:
  * - Birthday prediction logic
  * - Relationship inference
@@ -12,10 +12,10 @@
 
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { enrichContact, enrichContactBatch } from '../enrichment';
-import { 
-  validatePrivacyConsent, 
-  storePrivacyConsent, 
-  revokePrivacyConsent 
+import {
+  validatePrivacyConsent,
+  storePrivacyConsent,
+  revokePrivacyConsent
 } from '../privacy';
 import { checkRateLimit, resetRateLimit } from '../rate-limit';
 import type { ContactInput, PrivacyConsent } from '../types';
@@ -221,8 +221,8 @@ describe('Relationship Inference', () => {
 
     expect(result.success).toBe(true);
     expect(result.contact?.inferredRelationship).toBeDefined();
-    expect(result.contact!.inferredRelationship!.confidence).toBeGreaterThanOrEqual(0);
-    expect(result.contact!.inferredRelationship!.confidence).toBeLessThanOrEqual(100);
+    expect(result.contact?.inferredRelationship?.confidence).toBeGreaterThanOrEqual(0);
+    expect(result.contact?.inferredRelationship?.confidence).toBeLessThanOrEqual(100);
   });
 });
 
@@ -241,7 +241,7 @@ describe('Archetype Tagging', () => {
     expect(result.success).toBe(true);
     expect(result.contact?.archetypes).toBeDefined();
     expect(result.contact?.archetypes?.length).toBeGreaterThan(0);
-    
+
     const techArchetype = result.contact?.archetypes?.find(
       a => a.id === 'tech_enthusiast'
     );
@@ -258,7 +258,7 @@ describe('Archetype Tagging', () => {
 
     expect(result.success).toBe(true);
     expect(result.contact?.archetypes).toBeDefined();
-    
+
     const creativeArchetype = result.contact?.archetypes?.find(
       a => a.id === 'creative_artist'
     );
@@ -274,7 +274,7 @@ describe('Archetype Tagging', () => {
 
     expect(result.success).toBe(true);
     expect(result.contact?.archetypes).toBeDefined();
-    
+
     const foodieArchetype = result.contact?.archetypes?.find(
       a => a.id === 'foodie'
     );
@@ -346,10 +346,10 @@ describe('Gifting Profile Generation', () => {
     expect(result.success).toBe(true);
     const prefs = result.contact?.giftingProfile?.preferences;
     expect(prefs).toBeDefined();
-    expect(prefs!.sentimental).toBeGreaterThanOrEqual(0);
-    expect(prefs!.sentimental).toBeLessThanOrEqual(100);
-    expect(prefs!.practical).toBeGreaterThanOrEqual(0);
-    expect(prefs!.practical).toBeLessThanOrEqual(100);
+    expect(prefs?.sentimental).toBeGreaterThanOrEqual(0);
+    expect(prefs?.sentimental).toBeLessThanOrEqual(100);
+    expect(prefs?.practical).toBeGreaterThanOrEqual(0);
+    expect(prefs?.practical).toBeLessThanOrEqual(100);
   });
 
   it('should prioritize sentimental for creative artists', async () => {

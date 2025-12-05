@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export type NormalizedContact = {
   fullName?: string;
   emails?: string[];
@@ -69,8 +70,8 @@ export function normalizeLinkedInCsv(csvText: string): NormalizedContact[] {
   const contacts: NormalizedContact[] = [];
   const nameIndex = headers.indexOf('Name') !== -1 ? headers.indexOf('Name') : headers.findIndex(h => h.toLowerCase().includes('name'));
   const emailIndex = headers.indexOf('Email') !== -1 ? headers.indexOf('Email') : headers.findIndex(h => h.toLowerCase().includes('email'));
-  const companyIndex = headers.indexOf('Company') !== -1 ? headers.indexOf('Company') : headers.findIndex(h => h.toLowerCase().includes('company'));
-  const titleIndex = headers.indexOf('Title') !== -1 ? headers.indexOf('Title') : headers.findIndex(h => h.toLowerCase().includes('title'));
+  const _companyIndex = headers.indexOf('Company') !== -1 ? headers.indexOf('Company') : headers.findIndex(h => h.toLowerCase().includes('company'));
+  const _titleIndex = headers.indexOf('Title') !== -1 ? headers.indexOf('Title') : headers.findIndex(h => h.toLowerCase().includes('title'));
   const urlIndex = headers.indexOf('URL') !== -1 ? headers.indexOf('URL') : headers.findIndex(h => h.toLowerCase().includes('url'));
 
   for (const row of rows) {
@@ -87,7 +88,7 @@ export function normalizeLinkedInCsv(csvText: string): NormalizedContact[] {
   return contacts;
 }
 
-export function normalizeFacebookData(json: any | any[], fileNameHint?: string): NormalizedContact[] {
+export function normalizeFacebookData(json: any | any[], _fileNameHint?: string): NormalizedContact[] {
   const contacts: NormalizedContact[] = [];
 
   // Handle array of JSON objects or single object

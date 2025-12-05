@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Core Enrichment Logic for Contact Auto-Population
  * Phase 2 - BirthdayGen.com
- * 
+ *
  * Implements rule-based algorithms for:
  * - Birthday prediction (name patterns, social data, age estimation)
  * - Relationship inference (interaction patterns, contact metadata)
@@ -39,7 +40,7 @@ export async function enrichContact(
 ): Promise<EnrichmentResult> {
   try {
     const fieldsEnriched: string[] = [];
-    
+
     // Initialize enriched contact
     const enriched: EnrichedContact = {
       ...contact,
@@ -56,7 +57,7 @@ export async function enrichContact(
         privacyConsent: true, // Should be validated by API route
       },
     };
-    
+
     // Birthday prediction
     if (options?.predictBirthday !== false && !contact.birthday) {
       const predicted = await predictBirthday({
@@ -65,14 +66,14 @@ export async function enrichContact(
           profileInfo: contact.social_handles || {},
         },
       });
-      
+
       if (predicted) {
         enriched.predictedBirthday = predicted;
         fieldsEnriched.push('predictedBirthday');
         enriched.enrichmentMetadata.confidence.birthday = predicted.confidence;
       }
     }
-    
+
     // Relationship inference
     if (options?.inferRelationship !== false) {
       const relationship = await inferRelationship({
@@ -81,14 +82,14 @@ export async function enrichContact(
           emailDomain: contact.emails?.[0]?.split('@')[1],
         },
       });
-      
+
       if (relationship) {
         enriched.inferredRelationship = relationship;
         fieldsEnriched.push('inferredRelationship');
         enriched.enrichmentMetadata.confidence.relationship = relationship.confidence;
       }
     }
-    
+
     // Archetype tagging
     if (options?.tagArchetypes !== false) {
       const archetypes = await tagArchetypes({
@@ -98,36 +99,36 @@ export async function enrichContact(
           hobbies: contact.interests?.hobbies || [],
         },
       });
-      
+
       if (archetypes.length > 0) {
         enriched.archetypes = archetypes;
         fieldsEnriched.push('archetypes');
-        enriched.enrichmentMetadata.confidence.archetype = 
+        enriched.enrichmentMetadata.confidence.archetype =
           archetypes.reduce((acc, a) => acc + a.confidence, 0) / archetypes.length;
       }
     }
-    
+
     // Gifting profile generation
     if (options?.generateGiftingProfile !== false && enriched.archetypes) {
       const giftingProfile = generateGiftingProfile(enriched.archetypes);
       enriched.giftingProfile = giftingProfile;
       fieldsEnriched.push('giftingProfile');
     }
-    
+
     // Calculate overall confidence
     const confidenceValues = Object.values(enriched.enrichmentMetadata.confidence).filter(v => v > 0);
-    enriched.enrichmentMetadata.confidence.overall = 
-      confidenceValues.length > 0 
-        ? Math.round(confidenceValues.reduce((a, b) => a + b, 0) / confidenceValues.length) 
+    enriched.enrichmentMetadata.confidence.overall =
+      confidenceValues.length > 0
+        ? Math.round(confidenceValues.reduce((a, b) => a + b, 0) / confidenceValues.length)
         : 0;
-    
+
     enriched.enrichmentMetadata.fieldsEnriched = fieldsEnriched;
-    
+
     return {
       success: true,
       contact: enriched,
     };
-    
+
   } catch (error: any) {
     return {
       success: false,
@@ -154,11 +155,11 @@ export async function enrichContactBatch(
 ): Promise<BatchEnrichmentResult> {
   const startTime = Date.now();
   const results: EnrichmentResult[] = [];
-  
+
   let successful = 0;
   let failed = 0;
   let skipped = 0;
-  
+
   for (const contact of contacts) {
     // Skip contacts without minimum data
     if (!contact.fullName && (!contact.emails || contact.emails.length === 0)) {
@@ -172,17 +173,17 @@ export async function enrichContactBatch(
       });
       continue;
     }
-    
+
     const result = await enrichContact(contact, options);
     results.push(result);
-    
+
     if (result.success) {
       successful++;
     } else {
       failed++;
     }
   }
-  
+
   return {
     success: true,
     results,
@@ -206,17 +207,17 @@ export async function enrichContactBatch(
 async function predictBirthday(
   input: BirthdayPredictionInput
 ): Promise<{ month?: number; day?: number; confidence: number; reasoning: string } | null> {
-  const { contact, socialContext } = input;
-  
+  const { contact, socialContext: _socialContext } = input;
+
   // Check if we have any signals
   const signals: { month?: number; day?: number; confidence: number; source: string }[] = [];
-  
+
   // Signal 1: Name-based patterns (e.g., "April Smith" might be born in April)
   const monthNames = [
     'january', 'february', 'march', 'april', 'may', 'june',
     'july', 'august', 'september', 'october', 'november', 'december'
   ];
-  
+
   const name = contact.fullName?.toLowerCase() || '';
   monthNames.forEach((monthName, index) => {
     if (name.includes(monthName)) {
@@ -227,7 +228,7 @@ async function predictBirthday(
       });
     }
   });
-  
+
   // Signal 2: Email patterns (e.g., john1990@email.com might be born in 1990)
   const email = contact.emails?.[0] || '';
   const yearMatch = email.match(/\d{4}/);
@@ -241,13 +242,13 @@ async function predictBirthday(
       });
     }
   }
-  
+
   // Signal 3: Social handle patterns (e.g., @spring_baby or @may_child)
   const socialUrls = contact.urls?.join(' ').toLowerCase() || '';
-  const socialHandles = contact.social_handles ? 
+  const socialHandles = contact.social_handles ?
     Object.values(contact.social_handles).join(' ').toLowerCase() : '';
   const socialText = socialUrls + ' ' + socialHandles;
-  
+
   monthNames.forEach((monthName, index) => {
     if (socialText.includes(monthName)) {
       signals.push({
@@ -257,7 +258,7 @@ async function predictBirthday(
       });
     }
   });
-  
+
   // Signal 4: Season-based hints (spring, summer, fall, winter in username/bio)
   const seasonMap: Record<string, number[]> = {
     'spring': [3, 4, 5], // March, April, May
@@ -266,7 +267,7 @@ async function predictBirthday(
     'autumn': [9, 10, 11],
     'winter': [12, 1, 2], // December, January, February
   };
-  
+
   Object.entries(seasonMap).forEach(([season, months]) => {
     if (socialText.includes(season)) {
       // Pick middle month of season
@@ -278,15 +279,15 @@ async function predictBirthday(
       });
     }
   });
-  
+
   // No signals found
   if (signals.length === 0) {
     return null;
   }
-  
+
   // Aggregate signals - prefer higher confidence, more frequent months
   const monthCounts: Record<number, { count: number; totalConfidence: number; sources: string[] }> = {};
-  
+
   signals.forEach(signal => {
     if (signal.month) {
       if (!monthCounts[signal.month]) {
@@ -297,7 +298,7 @@ async function predictBirthday(
       monthCounts[signal.month].sources.push(signal.source);
     }
   });
-  
+
   // Find best month candidate
   const bestMonth = Object.entries(monthCounts)
     .map(([month, data]) => ({
@@ -311,17 +312,17 @@ async function predictBirthday(
       if (a.count !== b.count) return b.count - a.count;
       return b.avgConfidence - a.avgConfidence;
     })[0];
-  
+
   if (!bestMonth) {
     return null;
   }
-  
+
   // Generate reasoning
   const reasoning = `Predicted from ${bestMonth.sources.join(', ')} (${bestMonth.count} signal${bestMonth.count > 1 ? 's' : ''})`;
-  
+
   // Final confidence is average confidence, capped at 60% (rule-based has limits)
   const finalConfidence = Math.min(60, Math.round(bestMonth.avgConfidence));
-  
+
   return {
     month: bestMonth.month,
     confidence: finalConfidence,
@@ -339,10 +340,10 @@ async function predictBirthday(
 async function inferRelationship(
   input: RelationshipInferenceInput
 ): Promise<{ type: RelationshipType; confidence: number; reasoning: string } | null> {
-  const { contact, interactionMetrics, contextClues } = input;
-  
+  const { contact: _contact, interactionMetrics, contextClues } = input;
+
   const signals: { type: RelationshipType; confidence: number; reason: string }[] = [];
-  
+
   // Signal 1: Email domain analysis
   const emailDomain = contextClues?.emailDomain?.toLowerCase();
   if (emailDomain) {
@@ -363,7 +364,7 @@ async function inferRelationship(
       });
     }
   }
-  
+
   // Signal 2: Interaction frequency
   const frequency = interactionMetrics?.communicationFrequency;
   if (frequency) {
@@ -398,7 +399,7 @@ async function inferRelationship(
         break;
     }
   }
-  
+
   // Signal 3: Shared connections
   const sharedConnections = interactionMetrics?.sharedConnections || 0;
   if (sharedConnections > 10) {
@@ -414,7 +415,7 @@ async function inferRelationship(
       reason: 'some_shared_connections',
     });
   }
-  
+
   // Signal 4: Last contact recency
   const lastContact = interactionMetrics?.lastContactDate;
   if (lastContact) {
@@ -433,7 +434,7 @@ async function inferRelationship(
       });
     }
   }
-  
+
   // Default if no signals
   if (signals.length === 0) {
     return {
@@ -442,11 +443,11 @@ async function inferRelationship(
       reasoning: 'Insufficient data for relationship inference',
     };
   }
-  
+
   // Aggregate signals by type
-  const typeCounts: Record<RelationshipType, { count: number; totalConfidence: number; reasons: string[] }> = 
+  const typeCounts: Record<RelationshipType, { count: number; totalConfidence: number; reasons: string[] }> =
     {} as any;
-  
+
   signals.forEach(signal => {
     if (!typeCounts[signal.type]) {
       typeCounts[signal.type] = { count: 0, totalConfidence: 0, reasons: [] };
@@ -455,7 +456,7 @@ async function inferRelationship(
     typeCounts[signal.type].totalConfidence += signal.confidence;
     typeCounts[signal.type].reasons.push(signal.reason);
   });
-  
+
   // Find best relationship type
   const bestType = Object.entries(typeCounts)
     .map(([type, data]) => ({
@@ -468,7 +469,7 @@ async function inferRelationship(
       if (a.count !== b.count) return b.count - a.count;
       return b.avgConfidence - a.avgConfidence;
     })[0];
-  
+
   return {
     type: bestType.type,
     confidence: Math.round(bestType.avgConfidence),
@@ -487,9 +488,9 @@ async function tagArchetypes(
   input: ArchetypeTaggingInput
 ): Promise<Archetype[]> {
   const { contact, behavioralSignals } = input;
-  
+
   const archetypes: Archetype[] = [];
-  
+
   // Define archetype detection rules
   const archetypeRules = [
     {
@@ -549,7 +550,7 @@ async function tagArchetypes(
       tags: ['fashion', 'style', 'trends'],
     },
   ];
-  
+
   // Collect all text data from contact
   const textData = [
     contact.fullName || '',
@@ -558,15 +559,15 @@ async function tagArchetypes(
     ...(behavioralSignals?.interests || []),
     ...(behavioralSignals?.professionalTitles || []),
   ].join(' ').toLowerCase();
-  
+
   // Match archetypes
   archetypeRules.forEach(rule => {
     const matches = rule.keywords.filter(keyword => textData.includes(keyword));
-    
+
     if (matches.length > 0) {
       // Confidence based on match ratio
       const confidence = Math.min(80, Math.round((matches.length / rule.keywords.length) * 100));
-      
+
       archetypes.push({
         id: rule.id,
         name: rule.name,
@@ -576,7 +577,7 @@ async function tagArchetypes(
       });
     }
   });
-  
+
   // Sort by confidence
   return archetypes.sort((a, b) => b.confidence - a.confidence).slice(0, 3); // Top 3 archetypes
 }
@@ -596,11 +597,11 @@ function generateGiftingProfile(archetypes: Archetype[]): GiftingProfile {
     experiential: 50,
     luxurious: 50,
   };
-  
+
   // Adjust based on archetypes
   archetypes.forEach(archetype => {
     const weight = archetype.confidence / 100;
-    
+
     switch (archetype.id) {
       case 'tech_enthusiast':
         preferences.practical += 20 * weight;
@@ -636,12 +637,12 @@ function generateGiftingProfile(archetypes: Archetype[]): GiftingProfile {
         break;
     }
   });
-  
+
   // Normalize preferences to 0-100
   Object.keys(preferences).forEach(key => {
     preferences[key as keyof typeof preferences] = Math.min(100, Math.max(0, preferences[key as keyof typeof preferences]));
   });
-  
+
   // Determine primary style
   const styleScores: Record<GiftingStyle, number> = {
     [GiftingStyle.SENTIMENTAL]: preferences.sentimental,
@@ -653,13 +654,13 @@ function generateGiftingProfile(archetypes: Archetype[]): GiftingProfile {
     [GiftingStyle.ECO_CONSCIOUS]: archetypes.find(a => a.id === 'eco_warrior')?.confidence || 0,
     [GiftingStyle.FOODIE]: archetypes.find(a => a.id === 'foodie')?.confidence || 0,
   };
-  
+
   const primaryStyle = Object.entries(styleScores)
     .sort(([, a], [, b]) => b - a)[0][0] as GiftingStyle;
-  
+
   // Extract interests from archetypes
   const interests = archetypes.flatMap(a => a.tags);
-  
+
   return {
     style: primaryStyle,
     preferences,

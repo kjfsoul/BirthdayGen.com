@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 
 interface Contact {
   id: string;
@@ -36,8 +36,8 @@ export function ContactList() {
 
   const [userId, setUserId] = useState<string | null>(null);
   const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
   );
 
   useEffect(() => {
@@ -209,7 +209,7 @@ export function ContactList() {
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span>{contact.fullName}</span>
-                <Link href={`/gifts?contactId=${contact.id}`}>
+                <Link to={`/gifts?contactId=${contact.id}`}>
                   <Button variant="outline" size="sm">Gift Ideas</Button>
                 </Link>
               </CardTitle>

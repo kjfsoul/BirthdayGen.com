@@ -11,13 +11,9 @@ import {
   Gift,
   Mail,
   Bot,
-  Sparkles,
   Plus,
   Edit,
   Settings,
-  Bell,
-  Heart,
-  Clock,
   Zap,
   Wand2
 } from "lucide-react"
@@ -142,11 +138,10 @@ export default function AutomationPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as 'contacts' | 'holidays' | 'automation')}
-                  className={`flex items-center space-x-2 px-6 py-3 rounded-lg transition-all ${
-                    activeTab === tab.id
+                  className={`flex items-center space-x-2 px-6 py-3 rounded-lg transition-all ${activeTab === tab.id
                       ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white'
                       : 'text-gray-600 hover:bg-gray-100'
-                  }`}
+                    }`}
                 >
                   <tab.icon className="h-5 w-5" />
                   <span className="font-medium">{tab.name}</span>

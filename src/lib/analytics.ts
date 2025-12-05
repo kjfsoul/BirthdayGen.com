@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Simple analytics utility for tracking events
 // In production, replace with proper analytics service
 

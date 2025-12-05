@@ -3,7 +3,7 @@
 /**
  * Gift Finder Page
  * Phase 3 - BirthdayGen.com (AI Gift Recommendation Foundation)
- * 
+ *
  * Main UI for finding gift recommendations.
  * Includes:
  * - Basic input form (recipient name, budget, occasion)
@@ -28,7 +28,6 @@ import { OCCASION_LABELS, OccasionType as OccasionEnum, CATEGORY_LABELS } from '
 import {
   enhanceRecipientProfile,
   buildRecommendationRequest,
-  generateEngagementInsights,
 } from '@/lib/gifts/engagement-processor';
 
 type FormStep = 'basic' | 'games' | 'results';
@@ -40,58 +39,58 @@ export default function GiftFinderPage() {
   const [occasion, setOccasion] = useState<OccasionType>(OccasionEnum.BIRTHDAY);
   const [budgetMin, setBudgetMin] = useState(25);
   const [budgetMax, setBudgetMax] = useState(100);
-  
+
   // Engagement game state
   const [threeWordsAnswer, setThreeWordsAnswer] = useState<ThreeWordsGameAnswer | null>(null);
   const [vibeAnswer, setVibeAnswer] = useState<PickTheirVibeGameAnswer | null>(null);
-  
+
   // Results state
   const [isLoading, setIsLoading] = useState(false);
   const [recommendations, setRecommendations] = useState<GiftRecommendation[]>([]);
   const [recipientSummary, setRecipientSummary] = useState('');
   const [error, setError] = useState<string | null>(null);
-  
+
   // Handle basic form submission
   const handleBasicFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!recipientName.trim()) {
       alert('Please enter a recipient name');
       return;
     }
-    
+
     if (budgetMax < budgetMin) {
       alert('Maximum budget must be greater than minimum budget');
       return;
     }
-    
+
     setCurrentStep('games');
   };
-  
+
   // Handle engagement games completion
   const handleGamesComplete = async () => {
     if (!threeWordsAnswer || !vibeAnswer) {
       alert('Please complete both engagement games');
       return;
     }
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Build engagement answers
       const engagementAnswers: EngagementGameAnswers = {
         threeWords: threeWordsAnswer,
         pickTheirVibe: vibeAnswer,
       };
-      
+
       // Build recipient profile
       const baseProfile: Partial<RecipientProfile> = {
         name: recipientName,
       };
-      
+
       const recipientProfile = enhanceRecipientProfile(baseProfile, engagementAnswers);
-      
+
       // Build recommendation request
       const request = buildRecommendationRequest(recipientProfile, engagementAnswers, {
         occasion,
@@ -100,24 +99,24 @@ export default function GiftFinderPage() {
         budgetPreferred: Math.round((budgetMin + budgetMax) / 2),
         urgency: 'medium',
       });
-      
+
       // Call API
       const response = await fetch('/api/gift-recommendations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(request),
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to get recommendations');
       }
-      
+
       const data: RecommendationResponse = await response.json();
-      
+
       if (!data.success) {
         throw new Error(data.error?.message || 'Failed to get recommendations');
       }
-      
+
       // Update state with recommendations
       setRecommendations(data.recommendations);
       setRecipientSummary(data.recipientSummary);
@@ -129,7 +128,7 @@ export default function GiftFinderPage() {
       setIsLoading(false);
     }
   };
-  
+
   // Reset to start
   const handleStartOver = () => {
     setCurrentStep('basic');
@@ -143,7 +142,7 @@ export default function GiftFinderPage() {
     setRecipientSummary('');
     setError(null);
   };
-  
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-indigo-100">
       <div className="container mx-auto px-4 py-12">
@@ -156,7 +155,7 @@ export default function GiftFinderPage() {
             Find the perfect gift with AI-powered recommendations
           </p>
         </div>
-        
+
         {/* Progress indicator */}
         <div className="mb-8 flex justify-center">
           <div className="flex items-center space-x-4">
@@ -167,14 +166,14 @@ export default function GiftFinderPage() {
             <StepIndicator number={3} label="Results" active={currentStep === 'results'} />
           </div>
         </div>
-        
+
         {/* Content based on step */}
         <div className="mx-auto max-w-4xl">
           {/* STEP 1: Basic Form */}
           {currentStep === 'basic' && (
             <form onSubmit={handleBasicFormSubmit} className="rounded-2xl bg-white p-8 shadow-xl">
               <h2 className="mb-6 text-2xl font-bold text-gray-900">Tell us about your gift</h2>
-              
+
               {/* Recipient Name */}
               <div className="mb-6">
                 <label htmlFor="recipientName" className="mb-2 block text-sm font-semibold text-gray-700">
@@ -190,11 +189,11 @@ export default function GiftFinderPage() {
                   required
                 />
               </div>
-              
+
               {/* Occasion */}
               <div className="mb-6">
                 <label htmlFor="occasion" className="mb-2 block text-sm font-semibold text-gray-700">
-                  What's the occasion? *
+                  What&apos;s the occasion? *
                 </label>
                 <select
                   id="occasion"
@@ -209,7 +208,7 @@ export default function GiftFinderPage() {
                   ))}
                 </select>
               </div>
-              
+
               {/* Budget */}
               <div className="mb-6">
                 <label className="mb-2 block text-sm font-semibold text-gray-700">
@@ -250,7 +249,7 @@ export default function GiftFinderPage() {
                   Budget: ${budgetMin} - ${budgetMax}
                 </p>
               </div>
-              
+
               {/* Submit */}
               <button
                 type="submit"
@@ -260,7 +259,7 @@ export default function GiftFinderPage() {
               </button>
             </form>
           )}
-          
+
           {/* STEP 2: Engagement Games */}
           {currentStep === 'games' && (
             <div className="space-y-6">
@@ -271,7 +270,7 @@ export default function GiftFinderPage() {
                 <p className="mb-6 text-sm text-gray-600">
                   Play these quick games to get personalized recommendations
                 </p>
-                
+
                 {/* ThreeWordsGame */}
                 <div className="mb-6">
                   <ThreeWordsGame
@@ -279,7 +278,7 @@ export default function GiftFinderPage() {
                     onComplete={setThreeWordsAnswer}
                   />
                 </div>
-                
+
                 {/* PickTheirVibeGame */}
                 <div className="mb-6">
                   <PickTheirVibeGame
@@ -287,7 +286,7 @@ export default function GiftFinderPage() {
                     onComplete={setVibeAnswer}
                   />
                 </div>
-                
+
                 {/* Action buttons */}
                 <div className="flex space-x-4">
                   <button
@@ -299,16 +298,15 @@ export default function GiftFinderPage() {
                   <button
                     onClick={handleGamesComplete}
                     disabled={!threeWordsAnswer || !vibeAnswer || isLoading}
-                    className={`flex-1 rounded-lg py-3 font-semibold text-white transition-all ${
-                      threeWordsAnswer && vibeAnswer && !isLoading
-                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 hover:shadow-lg'
-                        : 'cursor-not-allowed bg-gray-300'
-                    }`}
+                    className={`flex-1 rounded-lg py-3 font-semibold text-white transition-all ${threeWordsAnswer && vibeAnswer && !isLoading
+                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 hover:shadow-lg'
+                      : 'cursor-not-allowed bg-gray-300'
+                      }`}
                   >
                     {isLoading ? 'Finding gifts...' : 'Get Recommendations →'}
                   </button>
                 </div>
-                
+
                 {/* Error display */}
                 {error && (
                   <div className="mt-4 rounded-lg bg-red-50 border border-red-200 p-4 text-sm text-red-700">
@@ -318,7 +316,7 @@ export default function GiftFinderPage() {
               </div>
             </div>
           )}
-          
+
           {/* STEP 3: Results */}
           {currentStep === 'results' && (
             <div className="space-y-6">
@@ -328,7 +326,7 @@ export default function GiftFinderPage() {
                   Gift Recommendations for {recipientName}
                 </h2>
                 <p className="text-gray-700">{recipientSummary}</p>
-                
+
                 {/* Insights */}
                 {threeWordsAnswer && vibeAnswer && (
                   <div className="mt-4 rounded-lg bg-purple-50 p-4">
@@ -356,7 +354,7 @@ export default function GiftFinderPage() {
                   </div>
                 )}
               </div>
-              
+
               {/* Recommendation Cards */}
               {recommendations.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2">
@@ -375,7 +373,7 @@ export default function GiftFinderPage() {
                   </p>
                 </div>
               )}
-              
+
               {/* Start Over button */}
               <div className="text-center">
                 <button
@@ -411,20 +409,18 @@ function StepIndicator({
   return (
     <div className="flex items-center space-x-2">
       <div
-        className={`flex h-10 w-10 items-center justify-center rounded-full font-bold ${
-          complete
-            ? 'bg-green-500 text-white'
-            : active
+        className={`flex h-10 w-10 items-center justify-center rounded-full font-bold ${complete
+          ? 'bg-green-500 text-white'
+          : active
             ? 'bg-purple-500 text-white'
             : 'bg-gray-300 text-gray-600'
-        }`}
+          }`}
       >
         {complete ? '✓' : number}
       </div>
       <div
-        className={`hidden text-sm font-medium sm:block ${
-          active ? 'text-purple-700' : 'text-gray-500'
-        }`}
+        className={`hidden text-sm font-medium sm:block ${active ? 'text-purple-700' : 'text-gray-500'
+          }`}
       >
         {label}
       </div>
@@ -433,8 +429,8 @@ function StepIndicator({
 }
 
 function GiftRecommendationCard({ recommendation }: { recommendation: GiftRecommendation }) {
-  const { product, confidence, reasoning, matchFactors, whyThisGift, personalizeIdea } = recommendation;
-  
+  const { product, confidence, matchFactors, whyThisGift, personalizeIdea } = recommendation;
+
   return (
     <div className="rounded-xl bg-white p-6 shadow-lg transition-all hover:shadow-2xl">
       {/* Header with confidence */}
@@ -445,13 +441,12 @@ function GiftRecommendationCard({ recommendation }: { recommendation: GiftRecomm
         </div>
         <div className="ml-4 flex flex-col items-end">
           <div
-            className={`rounded-full px-3 py-1 text-xs font-bold ${
-              confidence >= 80
-                ? 'bg-green-100 text-green-700'
-                : confidence >= 60
+            className={`rounded-full px-3 py-1 text-xs font-bold ${confidence >= 80
+              ? 'bg-green-100 text-green-700'
+              : confidence >= 60
                 ? 'bg-yellow-100 text-yellow-700'
                 : 'bg-gray-100 text-gray-700'
-            }`}
+              }`}
           >
             {confidence}% Match
           </div>
@@ -460,16 +455,16 @@ function GiftRecommendationCard({ recommendation }: { recommendation: GiftRecomm
           </div>
         </div>
       </div>
-      
+
       {/* Description */}
       <p className="mb-4 text-sm text-gray-700">{product.description}</p>
-      
+
       {/* Why this gift */}
       <div className="mb-4 rounded-lg bg-purple-50 p-3">
         <p className="text-xs font-semibold text-purple-900 mb-1">💡 Why this gift:</p>
         <p className="text-sm text-purple-800">{whyThisGift}</p>
       </div>
-      
+
       {/* Match factors */}
       <div className="mb-4">
         <p className="mb-2 text-xs font-semibold text-gray-700">Match Factors:</p>
@@ -479,7 +474,7 @@ function GiftRecommendationCard({ recommendation }: { recommendation: GiftRecomm
           <MatchFactor label="Budget" score={matchFactors.budgetMatch} />
         </div>
       </div>
-      
+
       {/* Personalize idea */}
       {personalizeIdea && (
         <div className="rounded-lg border border-pink-200 bg-pink-50 p-3">
@@ -487,7 +482,7 @@ function GiftRecommendationCard({ recommendation }: { recommendation: GiftRecomm
           <p className="text-xs text-pink-800">{personalizeIdea}</p>
         </div>
       )}
-      
+
       {/* Tags */}
       <div className="mt-4 flex flex-wrap gap-2">
         {product.tags.slice(0, 4).map((tag) => (
@@ -509,9 +504,8 @@ function MatchFactor({ label, score }: { label: string; score: number }) {
       <span className="w-20 text-xs text-gray-600">{label}:</span>
       <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
         <div
-          className={`h-full rounded-full ${
-            score >= 80 ? 'bg-green-500' : score >= 60 ? 'bg-yellow-500' : 'bg-gray-400'
-          }`}
+          className={`h-full rounded-full ${score >= 80 ? 'bg-green-500' : score >= 60 ? 'bg-yellow-500' : 'bg-gray-400'
+            }`}
           style={{ width: `${score}%` }}
         />
       </div>

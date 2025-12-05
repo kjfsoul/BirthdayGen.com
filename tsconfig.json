@@ -42,6 +42,8 @@
     "src/components/__tests__",
     "**/*.test.ts",
     "**/*.test.tsx",
-    "**/__tests__/**"
+    "**/__tests__/**",
+    "src/app/_api_archived/**/*",
+    "src/app/**/_callback_archived/**/*"
   ]
 }

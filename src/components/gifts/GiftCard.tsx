@@ -22,11 +22,14 @@ export function GiftCard({ gift }: GiftCardProps) {
         <Card className="h-full flex flex-col overflow-hidden hover:shadow-lg transition-shadow duration-300">
             <div className="relative h-48 w-full overflow-hidden bg-gray-100">
                 {gift.image_url ? (
-                    <img
-                        src={gift.image_url}
-                        alt={gift.title}
-                        className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
-                    />
+                    <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                            src={gift.image_url}
+                            alt={gift.title}
+                            className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                        />
+                    </>
                 ) : (
                     <div className="flex h-full items-center justify-center text-gray-400">
                         No Image

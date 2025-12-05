@@ -55,8 +55,8 @@ interface EnrichedContactsDisplayProps {
 export function EnrichedContactsDisplay({
   contacts,
   onEditContact,
-  onAcceptContact,
-  onRejectContact,
+  onAcceptContact: _onAcceptContact,
+  onRejectContact: _onRejectContact,
   className = '',
 }: EnrichedContactsDisplayProps) {
   const [expandedContact, setExpandedContact] = useState<string | null>(null);

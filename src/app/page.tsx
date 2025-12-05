@@ -17,7 +17,6 @@ import {
   Star,
   Calendar,
   Search,
-  Upload,
   Link as LinkIcon
 } from "lucide-react"
 import { NewsletterSignup } from './components/NewsletterSignup'
@@ -142,7 +141,7 @@ export default function Home() {
             Never Miss Another Birthday
           </h2>
           <p className="text-lg text-gray-600 mb-8">
-            Import your contacts and let us handle the rest. We'll remind you of upcoming birthdays and help you send the perfect cards and gifts.
+            Import your contacts and let us handle the rest. We&apos;ll remind you of upcoming birthdays and help you send the perfect cards and gifts.
           </p>
           <Dialog open={isCTADialogOpen} onOpenChange={setIsCTADialogOpen}>
             <DialogTrigger asChild>
@@ -246,16 +245,16 @@ export default function Home() {
               Everything You Need for Perfect Celebrations
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              From stunning cards to party planning, we've got every celebration covered.
+              From stunning cards to party planning, we&apos;ve got every celebration covered.
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {tools.map((tool, index) => (
+            {tools.map((tool) => (
               <Link key={tool.href} to={tool.href}>
                 <Card className="h-full hover:shadow-xl transition-all duration-300 cursor-pointer group border-0 shadow-lg">
                   <CardHeader>
-                    <div className={`w - 16 h - 16 rounded - xl bg - gradient - to - r ${tool.color} flex items - center justify - center mb - 4 group - hover: scale - 110 transition - transform`}>
+                    <div className={`w-16 h-16 rounded-xl bg-gradient-to-r ${tool.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
                       <tool.icon className="h-8 w-8 text-white" />
                     </div>
                     <CardTitle className="text-xl mb-2 text-gray-900 group-hover:text-purple-600 transition-colors">{tool.title}</CardTitle>

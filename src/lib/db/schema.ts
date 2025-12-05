@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Database Schema Types
- * 
+ *
  * Type definitions for Supabase database tables.
  * Generated from: supabase/migrations/20251121_init_schema.sql
- * 
+ *
  * These types ensure type safety when interacting with the database.
  */
 

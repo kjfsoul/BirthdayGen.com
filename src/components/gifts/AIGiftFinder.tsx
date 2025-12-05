@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import React, { useState } from 'react';
@@ -93,7 +94,7 @@ export function AIGiftFinder() {
                         AI Gift Finder
                     </CardTitle>
                     <CardDescription className="text-lg">
-                        Tell us who you're shopping for, and we'll find the perfect match.
+                        Tell us who you&apos;re shopping for, and we&apos;ll find the perfect match.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

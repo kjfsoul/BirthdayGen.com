@@ -1,12 +1,12 @@
 /**
  * Gift Recommendation Engine - Type Definitions & Schema
  * Phase 3 - BirthdayGen.com (AI Gift Recommendation Foundation)
- * 
+ *
  * Defines all types for gift recommendations, engagement games,
  * recipient profiling, and recommendation logic.
  */
 
-import type { EnrichedContact, GiftingProfile, GiftingStyle, RelationshipType } from '@/lib/autopopulate/types';
+import type { GiftingProfile, RelationshipType } from '@/lib/autopopulate/types';
 
 // ============================================================================
 // CORE GIFT RECOMMENDATION TYPES
@@ -20,31 +20,31 @@ export enum GiftCategory {
   EXPERIENCES = 'experiences',
   EVENTS = 'events',
   TRAVEL = 'travel',
-  
+
   // Physical gifts
   TECH = 'tech',
   FASHION = 'fashion',
   HOME_DECOR = 'home_decor',
   BEAUTY = 'beauty',
   BOOKS = 'books',
-  
+
   // Food & Beverage
   FOOD = 'food',
   WINE = 'wine',
   GOURMET = 'gourmet',
-  
+
   // Hobby-based
   SPORTS = 'sports',
   GAMING = 'gaming',
   ART = 'art',
   MUSIC = 'music',
   WELLNESS = 'wellness',
-  
+
   // Sentimental
   PERSONALIZED = 'personalized',
   HANDMADE = 'handmade',
   JEWELRY = 'jewelry',
-  
+
   // Other
   SUBSCRIPTION = 'subscription',
   GIFT_CARDS = 'gift_cards',
@@ -102,11 +102,11 @@ export interface ProductDetails {
 /**
  * Product source types for external API integrations
  */
-export type ProductSource = 
-  | 'printify' 
-  | 'amazon' 
-  | 'etsy' 
-  | 'tiktok_shop' 
+export type ProductSource =
+  | 'printify'
+  | 'amazon'
+  | 'etsy'
+  | 'tiktok_shop'
   | 'internal';
 
 /**
@@ -116,27 +116,27 @@ export interface Product {
   // Core identifiers
   id: string;
   source: ProductSource;
-  
+
   // Basic info
   name: string;
   description: string;
   category: GiftCategory;
-  
+
   // Pricing
   price: number;
   currency: string; // ISO 4217 currency code (e.g., "USD", "EUR")
-  
+
   // Media & Links
   imageUrl: string;
   productUrl: string;
   affiliateUrl?: string;
-  
+
   // Vendor info
   vendorName: string;
-  
+
   // Classification & Search
   tags: string[];
-  
+
   // Additional metadata
   metadata?: {
     rating?: number; // 0-5
@@ -158,7 +158,7 @@ export interface GiftRecommendation {
   product: ProductDetails;
   confidence: number; // 0-100
   reasoning: string;
-  
+
   // Matching factors
   matchFactors: {
     giftingStyleMatch: number; // 0-100
@@ -167,7 +167,7 @@ export interface GiftRecommendation {
     budgetMatch: number; // 0-100
     relationshipMatch: number; // 0-100
   };
-  
+
   // Additional context
   whyThisGift: string; // User-friendly explanation
   alternativeSuggestions?: string[];
@@ -176,10 +176,10 @@ export interface GiftRecommendation {
 
 /**
  * Product fetch status for gift recommendations (Module D)
- * 
+ *
  * Indicates the result of attempting to fetch real products for a recommendation
  */
-export type ProductsStatus = 
+export type ProductsStatus =
   | 'ok' // Products found successfully
   | 'no_products_configured' // All product APIs missing keys
   | 'no_products_found' // APIs configured but no matches
@@ -187,7 +187,7 @@ export type ProductsStatus =
 
 /**
  * Extended gift recommendation with real product data (Module D)
- * 
+ *
  * Extends GiftRecommendation with actual product listings from external APIs.
  * Backward compatible - existing clients can ignore new fields.
  */
@@ -212,15 +212,15 @@ export interface RecipientProfile {
   giftingProfile?: GiftingProfile;
   archetypes?: Array<{ name: string; tags: string[]; confidence: number }>;
   interests?: string[];
-  
+
   // From engagement games
   threeWords?: string[]; // From ThreeWordsGame
   vibes?: string[]; // From PickTheirVibeGame
-  
+
   // User-provided
   age?: number;
   gender?: string;
-  
+
   // Metadata
   enrichmentConfidence?: number; // Overall confidence from auto-populate
 }
@@ -274,12 +274,12 @@ export interface RecommendationRequest {
     max: number;
     preferred?: number;
   };
-  
+
   // Optional
   engagementAnswers?: EngagementGameAnswers;
   excludeCategories?: GiftCategory[];
   preferredCategories?: GiftCategory[];
-  
+
   // Context
   urgency?: 'low' | 'medium' | 'high'; // Affects experiential vs physical
   shippingRequired?: boolean;
@@ -292,12 +292,12 @@ export interface RecommendationRequest {
 export interface RecommendationResponse {
   success: boolean;
   recommendations: GiftRecommendation[];
-  
+
   // Metadata
   recipientSummary: string; // E.g., "Based on your adventurous, creative friend..."
   totalMatches: number;
   processingTime: number; // milliseconds
-  
+
   // Insights
   topCategories: GiftCategory[];
   budgetUtilization: {
@@ -305,7 +305,7 @@ export interface RecommendationResponse {
     max: number;
     average: number;
   };
-  
+
   // Error handling
   error?: {
     code: string;
@@ -316,7 +316,7 @@ export interface RecommendationResponse {
 
 /**
  * Response with gift recommendations including real product data (Module D)
- * 
+ *
  * Extended response type that includes real product listings from external APIs.
  * Backward compatible - can be used in place of RecommendationResponse.
  */

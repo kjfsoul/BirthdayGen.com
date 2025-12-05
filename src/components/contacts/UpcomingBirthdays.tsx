@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 
 interface Contact {
   id: string;
@@ -25,8 +25,8 @@ export function UpcomingBirthdays() {
 
   const [userId, setUserId] = useState<string | null>(null);
   const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
   );
 
   useEffect(() => {
@@ -50,7 +50,8 @@ export function UpcomingBirthdays() {
 
           const upcoming: UpcomingBirthday[] = contactsWithBirthdays
             .map((contact: Contact) => {
-              const birthday = new Date(contact.birthday!);
+              if (!contact.birthday) return null;
+              const birthday = new Date(contact.birthday);
               const now = new Date();
               const currentYear = now.getFullYear();
 
@@ -70,7 +71,7 @@ export function UpcomingBirthdays() {
                 daysUntil,
               };
             })
-            .filter((item: UpcomingBirthday) => item.daysUntil <= horizon)
+            .filter((item): item is UpcomingBirthday => item !== null && item.daysUntil <= horizon)
             .sort((a: UpcomingBirthday, b: UpcomingBirthday) => a.daysUntil - b.daysUntil);
 
           setBirthdays(upcoming);
@@ -134,7 +135,7 @@ export function UpcomingBirthdays() {
                     {nextBirthday.toLocaleDateString()} ({daysUntil} days)
                   </p>
                 </div>
-                <Link href={`/gifts?contactId=${contact.id}`}>
+                <Link to={`/gifts?contactId=${contact.id}`}>
                   <Button variant="outline" size="sm">
                     Personalize Gift
                   </Button>

@@ -116,6 +116,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -131,8 +132,15 @@
 }
 
 @keyframes magical-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(236, 72, 153, 0.5); }
-  50% { box-shadow: 0 0 40px rgba(236, 72, 153, 0.8); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(236, 72, 153, 0.5);
+  }
+
+  50% {
+    box-shadow: 0 0 40px rgba(236, 72, 153, 0.8);
+  }
 }
 
 .animate-magical-glow {
@@ -175,4 +183,88 @@
 /* Font display class */
 .font-display {
   font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+}
+
+/* Template font classes */
+.font-fredoka {
+  font-family: 'Fredoka One', cursive;
+}
+
+.font-playfair {
+  font-family: 'Playfair Display', serif;
+}
+
+.font-chewy {
+  font-family: 'Chewy', cursive;
+}
+
+/* 3D Card Stage styles */
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+/* Confetti background pattern */
+.bg-confetti {
+  background-image:
+    radial-gradient(circle at 20% 80%, #ec4899 2px, transparent 2px),
+    radial-gradient(circle at 80% 20%, #a855f7 2px, transparent 2px),
+    radial-gradient(circle at 40% 40%, #f59e0b 2px, transparent 2px),
+    radial-gradient(circle at 60% 60%, #3b82f6 2px, transparent 2px),
+    radial-gradient(circle at 90% 90%, #10b981 2px, transparent 2px);
+  background-size: 100px 100px;
+}
+
+/* Gold cream pattern for elegant template */
+.bg-gold-cream {
+  background:
+    radial-gradient(ellipse at top left, rgba(212, 175, 55, 0.2) 0%, transparent 50%),
+    radial-gradient(ellipse at bottom right, rgba(212, 175, 55, 0.2) 0%, transparent 50%),
+    linear-gradient(135deg, #f5e6c8 0%, #faf3e3 50%, #f5e6c8 100%);
+}
+
+/* Balloon background pattern */
+.bg-balloons {
+  background-image:
+    radial-gradient(ellipse 30px 40px at 15% 30%, #ef4444 50%, transparent 50%),
+    radial-gradient(ellipse 25px 35px at 85% 25%, #3b82f6 50%, transparent 50%),
+    radial-gradient(ellipse 28px 38px at 50% 70%, #22c55e 50%, transparent 50%),
+    radial-gradient(ellipse 22px 32px at 30% 85%, #f59e0b 50%, transparent 50%),
+    radial-gradient(ellipse 26px 36px at 70% 15%, #a855f7 50%, transparent 50%);
+  background-size: 200px 200px;
+}
+
+/* Snowflake animation - soft, round snowflakes using radial gradients */
+@keyframes snowfall {
+  0% {
+    transform: translateY(-10px) translateX(0);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(100vh) translateX(20px);
+    opacity: 0.3;
+  }
+}
+
+.snowflake {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: radial-gradient(circle, white 0%, rgba(255, 255, 255, 0.8) 40%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: snowfall linear infinite;
+  z-index: 1;
+}
+
+/* Snowfall container for templates that need it */
+.snow-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
 }

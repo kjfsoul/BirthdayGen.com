@@ -1,14 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { FONT_MAP } from "@/lib/fonts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
@@ -16,11 +15,10 @@ import { toast } from "sonner";
 const fontOptions = Object.keys(FONT_MAP);
 
 export default function SimpleGeneratorPage() {
-  const router = useRouter();
   const [message, setMessage] = useState("Happy Birthday! Wishing you all the best.");
   const [backgroundColor, setBackgroundColor] = useState("#FFE8B5");
   const [fontFamily, setFontFamily] = useState("system");
-  const [textColor, setTextColor] = useState("#0B0B0E"); // A sensible default text color
+  const [textColor] = useState("#0B0B0E"); // A sensible default text color
   const [isSaving, setIsSaving] = useState(false);
   const [isSendDialogOpen, setIsSendDialogOpen] = useState(false);
   const [recipientEmail, setRecipientEmail] = useState("");
@@ -46,14 +44,14 @@ export default function SimpleGeneratorPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-     if (!res.ok) {
-       const errorData = await res.json();
-       console.error("Save failed:", errorData);
-       toast.error("Failed to save the card. Please check the console for details.");
-       return;
-     }
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error("Save failed:", errorData);
+        toast.error("Failed to save the card. Please check the console for details.");
+        return;
+      }
 
-     const created = await res.json();
+      const created = await res.json();
       toast.success("Card saved successfully!");
       setSavedCardId(created.id);
       setIsSendDialogOpen(true);

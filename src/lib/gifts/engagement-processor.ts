@@ -1,7 +1,7 @@
 /**
  * Engagement Game Processor
  * Phase 3 - BirthdayGen.com (AI Gift Recommendation Foundation)
- * 
+ *
  * Processes engagement game answers into structured data for recommendations.
  * Maps game data to recommendation parameters and enhances recipient profiles.
  */
@@ -11,9 +11,10 @@ import type {
   RecipientProfile,
   ThreeWordsGameAnswer,
   PickTheirVibeGameAnswer,
+  OccasionType,
 } from '@/lib/gifts/schema';
 import { VIBE_OPTIONS, GiftCategory } from '@/lib/gifts/schema';
-import type { EnrichedContact, GiftingStyle } from '@/lib/autopopulate/types';
+import type { EnrichedContact, GiftingProfile, GiftingStyle } from '@/lib/autopopulate/types';
 
 // ============================================================================
 // ENGAGEMENT DATA PROCESSING
@@ -28,10 +29,10 @@ export function processThreeWordsAnswer(answer: ThreeWordsGameAnswer): {
   personalityInsights: string[];
 } {
   const { extractedTraits } = answer;
-  
+
   // Infer gifting style from personality traits
   let inferredGiftingStyle: GiftingStyle | null = null;
-  
+
   if (extractedTraits.personality.includes('creative') || extractedTraits.personality.includes('artistic')) {
     inferredGiftingStyle = 'creative' as GiftingStyle;
   } else if (extractedTraits.personality.includes('adventurous') || extractedTraits.personality.includes('outdoorsy')) {
@@ -47,10 +48,10 @@ export function processThreeWordsAnswer(answer: ThreeWordsGameAnswer): {
   } else if (extractedTraits.aesthetic.includes('natural') || extractedTraits.personality.includes('spiritual')) {
     inferredGiftingStyle = 'eco_conscious' as GiftingStyle;
   }
-  
+
   // Map traits to preferred gift categories
   const preferredCategories: GiftCategory[] = [];
-  
+
   // Personality-based categories
   if (extractedTraits.personality.includes('creative')) {
     preferredCategories.push(GiftCategory.ART, GiftCategory.HANDMADE);
@@ -70,7 +71,7 @@ export function processThreeWordsAnswer(answer: ThreeWordsGameAnswer): {
   if (extractedTraits.personality.includes('spiritual')) {
     preferredCategories.push(GiftCategory.WELLNESS, GiftCategory.BOOKS);
   }
-  
+
   // Aesthetic-based categories
   if (extractedTraits.aesthetic.includes('luxurious') || extractedTraits.aesthetic.includes('glam')) {
     preferredCategories.push(GiftCategory.FASHION, GiftCategory.JEWELRY, GiftCategory.BEAUTY);
@@ -87,10 +88,10 @@ export function processThreeWordsAnswer(answer: ThreeWordsGameAnswer): {
   if (extractedTraits.aesthetic.includes('natural')) {
     preferredCategories.push(GiftCategory.ECO_FRIENDLY, GiftCategory.WELLNESS);
   }
-  
+
   // Tone-based insights (for messaging)
   const personalityInsights: string[] = [];
-  
+
   if (extractedTraits.tone.includes('playful')) {
     personalityInsights.push('Has a fun, lighthearted personality');
   }
@@ -106,10 +107,10 @@ export function processThreeWordsAnswer(answer: ThreeWordsGameAnswer): {
   if (extractedTraits.tone.includes('calm')) {
     personalityInsights.push('Prefers peaceful, serene experiences');
   }
-  
+
   // Remove duplicates from categories
   const uniqueCategories = Array.from(new Set(preferredCategories));
-  
+
   return {
     inferredGiftingStyle,
     preferredCategories: uniqueCategories,
@@ -126,29 +127,29 @@ export function processPickTheirVibeAnswer(answer: PickTheirVibeGameAnswer): {
   vibeDescriptions: string[];
 } {
   const { selectedVibes } = answer;
-  
+
   const preferredCategories: GiftCategory[] = [];
   const aestheticTags: string[] = [];
   const vibeDescriptions: string[] = [];
-  
+
   selectedVibes.forEach((vibeId) => {
     const vibe = VIBE_OPTIONS.find((v) => v.id === vibeId);
     if (vibe) {
       // Add associated categories
       vibe.associatedCategories.forEach((cat) => preferredCategories.push(cat));
-      
+
       // Add aesthetic tags
       vibe.aestheticTags.forEach((tag) => aestheticTags.push(tag));
-      
+
       // Add vibe description
       vibeDescriptions.push(vibe.description);
     }
   });
-  
+
   // Remove duplicates
   const uniqueCategories = Array.from(new Set(preferredCategories));
   const uniqueAestheticTags = Array.from(new Set(aestheticTags));
-  
+
   return {
     preferredCategories: uniqueCategories,
     aestheticTags: uniqueAestheticTags,
@@ -177,7 +178,7 @@ export function enhanceRecipientProfile(
     archetypes: baseProfile.archetypes,
     interests: baseProfile.interests || [],
   };
-  
+
   // Add enriched contact data if available
   if (enrichedContact) {
     enhanced.relationship = enrichedContact.inferredRelationship?.type;
@@ -185,36 +186,36 @@ export function enhanceRecipientProfile(
     enhanced.archetypes = enrichedContact.archetypes;
     enhanced.enrichmentConfidence = enrichedContact.enrichmentMetadata?.confidence?.overall;
   }
-  
+
   // Process ThreeWordsGame data
   if (engagementAnswers.threeWords) {
     enhanced.threeWords = engagementAnswers.threeWords.words;
-    
+
     const processed = processThreeWordsAnswer(engagementAnswers.threeWords);
-    
+
     // Override gifting style if inferred from game (game data is more recent/accurate)
     if (processed.inferredGiftingStyle) {
       enhanced.giftingProfile = {
         ...enhanced.giftingProfile,
         style: processed.inferredGiftingStyle,
-      } as any;
+      } as GiftingProfile;
     }
-    
+
     // Add inferred interests from personality traits
     const personalityTraits = engagementAnswers.threeWords.extractedTraits.personality;
     enhanced.interests = Array.from(new Set([...(enhanced.interests || []), ...personalityTraits]));
   }
-  
+
   // Process PickTheirVibeGame data
   if (engagementAnswers.pickTheirVibe) {
     enhanced.vibes = engagementAnswers.pickTheirVibe.selectedVibes;
-    
+
     const processed = processPickTheirVibeAnswer(engagementAnswers.pickTheirVibe);
-    
+
     // Add aesthetic tags as interests
     enhanced.interests = Array.from(new Set([...(enhanced.interests || []), ...processed.aestheticTags]));
   }
-  
+
   return enhanced;
 }
 
@@ -245,22 +246,22 @@ export function buildRecommendationRequest(
 } {
   // Collect all preferred categories from both games
   let preferredCategories: GiftCategory[] = [];
-  
+
   if (engagementAnswers.threeWords) {
     const processed = processThreeWordsAnswer(engagementAnswers.threeWords);
     preferredCategories.push(...processed.preferredCategories);
   }
-  
+
   if (engagementAnswers.pickTheirVibe) {
     preferredCategories.push(...engagementAnswers.pickTheirVibe.categoryPreferences);
   }
-  
+
   // Remove duplicates and keep top 5 categories
   preferredCategories = Array.from(new Set(preferredCategories)).slice(0, 5);
-  
+
   return {
     recipient: recipientProfile,
-    occasion: options.occasion as any,
+    occasion: options.occasion as OccasionType,
     budget: {
       min: options.budgetMin,
       max: options.budgetMax,
@@ -288,24 +289,24 @@ export function generateEngagementInsights(
 } {
   const keyTraits: string[] = [];
   const giftingHints: string[] = [];
-  
+
   // Process ThreeWordsGame insights
   if (engagementAnswers.threeWords) {
     const { extractedTraits } = engagementAnswers.threeWords;
-    
+
     // Add personality traits
     keyTraits.push(...extractedTraits.personality.slice(0, 3));
     keyTraits.push(...extractedTraits.tone.slice(0, 2));
-    
+
     // Generate gifting hints from traits
     const processed = processThreeWordsAnswer(engagementAnswers.threeWords);
     processed.personalityInsights.forEach((insight) => giftingHints.push(insight));
   }
-  
+
   // Process PickTheirVibeGame insights
   if (engagementAnswers.pickTheirVibe) {
     const { selectedVibes } = engagementAnswers.pickTheirVibe;
-    
+
     selectedVibes.forEach((vibeId) => {
       const vibe = VIBE_OPTIONS.find((v) => v.id === vibeId);
       if (vibe) {
@@ -314,31 +315,31 @@ export function generateEngagementInsights(
       }
     });
   }
-  
+
   // Generate summary
   let summary = 'Based on your inputs, ';
-  
+
   if (engagementAnswers.threeWords) {
     summary += `they are ${engagementAnswers.threeWords.words.join(', ')}`;
   }
-  
+
   if (engagementAnswers.pickTheirVibe && engagementAnswers.pickTheirVibe.selectedVibes.length > 0) {
     const vibeLabels = engagementAnswers.pickTheirVibe.selectedVibes
       .map((vibeId) => VIBE_OPTIONS.find((v) => v.id === vibeId)?.label.toLowerCase())
       .filter(Boolean);
-    
+
     if (engagementAnswers.threeWords) {
       summary += ` with ${vibeLabels.join(' and ')} vibes`;
     } else {
       summary += `they have ${vibeLabels.join(' and ')} vibes`;
     }
   }
-  
+
   summary += '. We\'ll find gifts that match their unique personality!';
-  
+
   // Remove duplicates from key traits
   const uniqueKeyTraits = Array.from(new Set(keyTraits));
-  
+
   return {
     summary,
     keyTraits: uniqueKeyTraits,

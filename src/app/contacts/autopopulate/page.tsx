@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useState, useCallback } from 'react';
@@ -18,18 +20,18 @@ import {
   Users,
 } from 'lucide-react';
 import type { EnrichedContact } from '@/lib/autopopulate/types';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 /**
  * Auto-Populate Contacts Page
- * 
+ *
  * Main integration page that composes all auto-populate components:
  * - AutoPopulateButton: Trigger enrichment
  * - AutoPopulateProgress: Show progress
  * - EnrichedContactsDisplay: Display results
  * - BulkContactControls: Bulk operations
- * 
+ *
  * Features:
  * - Complete enrichment workflow
  * - Error boundaries
@@ -41,11 +43,11 @@ export default function AutoPopulatePage() {
   // Enrichment state
   const [status, setStatus] = useState<EnrichmentStatus>('idle');
   const [progress, setProgress] = useState(0);
-  const [totalContacts, setTotalContacts] = useState(0);
+  const [totalContacts] = useState(0);
   const [processedContacts, setProcessedContacts] = useState(0);
   const [successCount, setSuccessCount] = useState(0);
   const [errorCount, setErrorCount] = useState(0);
-  const [currentContact, setCurrentContact] = useState<string>();
+  const [currentContact] = useState<string>();
   const [errorMessage, setErrorMessage] = useState<string>();
   const [enrichedContacts, setEnrichedContacts] = useState<EnrichedContact[]>([]);
 
@@ -150,7 +152,7 @@ export default function AutoPopulatePage() {
             AI-powered contact enrichment with birthday predictions, relationship inference, and gifting profiles
           </p>
         </div>
-        <Link href="/contacts">
+        <Link to="/contacts">
           <Button variant="outline">← Back to Contacts</Button>
         </Link>
       </div>
@@ -303,7 +305,7 @@ export default function AutoPopulatePage() {
                 1
               </Badge>
               <div>
-                <strong>Click "Auto-Populate Contacts"</strong> to start the enrichment process
+                <strong>Click &quot;Auto-Populate Contacts&quot;</strong> to start the enrichment process
               </div>
             </li>
             <li className="flex gap-3">

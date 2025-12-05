@@ -1,10 +1,11 @@
+/* eslint-disable no-console */
 /**
  * Product Service - External API Integration Layer
  * Phase 4 - Module C (Real Product Data Structure)
- * 
+ *
  * Production-ready product data layer with scaffolding for external API integrations.
  * Supports Printify, Amazon, Etsy, and TikTok Shop APIs.
- * 
+ *
  * REQUIRED ENVIRONMENT VARIABLES:
  * - PRINTIFY_API_KEY: Printify API authentication key
  * - AMAZON_API_KEY: Amazon Product Advertising API key
@@ -145,10 +146,10 @@ export interface ProductFetchResult {
 
 /**
  * Main product fetching function with multi-source aggregation
- * 
+ *
  * @param query - Product query parameters
  * @returns Promise resolving to product fetch result
- * 
+ *
  * @example
  * ```typescript
  * const result = await fetchProducts({
@@ -162,14 +163,14 @@ export async function fetchProducts(
   query: ProductQuery
 ): Promise<ProductFetchResult> {
   const {
-    categories,
+    categories: _categories,
     maxPrice,
     minPrice,
     tags,
     sourceFilter,
     limit = 50,
     offset = 0,
-    searchQuery,
+    searchQuery: _searchQuery,
     sortBy = 'popularity',
   } = query;
 
@@ -311,11 +312,11 @@ export async function fetchProducts(
 
 /**
  * Search products by category with optional budget constraint
- * 
+ *
  * @param category - Gift category to search
  * @param budget - Optional maximum price
  * @returns Promise resolving to array of products
- * 
+ *
  * @example
  * ```typescript
  * const products = await searchProductsByCategory(
@@ -343,11 +344,11 @@ export async function searchProductsByCategory(
 
 /**
  * Get a specific product by ID and source
- * 
+ *
  * @param id - Product ID
  * @param source - Product source
  * @returns Promise resolving to product or null if not found
- * 
+ *
  * @example
  * ```typescript
  * const product = await getProductById('12345', 'amazon');
@@ -364,7 +365,7 @@ export async function getProductById(
   // Check if source is configured
   const sourceKey =
     source === 'tiktok_shop' ? 'tiktokShop' : source;
-  
+
   if (source === 'internal') {
     // TODO: Implement internal product lookup from database
     console.warn('[ProductService] Internal product lookup not yet implemented');
@@ -407,20 +408,20 @@ export async function getProductById(
 
 /**
  * Fetch real products for a GPT-4o gift recommendation (Module D)
- * 
+ *
  * Integrates ProductService with AI recommendations by:
  * - Extracting category and tags from GPT recommendation
  * - Querying configured product APIs (Amazon, Etsy, etc.)
  * - Applying budget constraints
  * - Returning matching products or empty array if APIs not configured
- * 
+ *
  * This function gracefully handles API errors and missing configurations,
  * ensuring the gift recommendation API never crashes due to product service issues.
- * 
+ *
  * @param recommendation - GPT-4o generated gift recommendation
  * @param budget - Optional budget constraints (overrides recommendation price)
  * @returns Promise resolving to array of matching products (empty if APIs not configured)
- * 
+ *
  * @example
  * ```typescript
  * // After GPT-4o generates recommendations
@@ -428,7 +429,7 @@ export async function getProductById(
  *   recommendation,
  *   { min: 20, max: 50 }
  * );
- * 
+ *
  * if (products.length > 0) {
  *   console.log('Found real products matching AI recommendation');
  * }
@@ -441,15 +442,15 @@ export async function fetchProductsForRecommendation(
   try {
     // Extract category from recommendation
     const category = recommendation.product.category;
-    
+
     // Extract tags for more refined search
     const tags = recommendation.product.tags || [];
-    
+
     // Determine budget constraints
     // Use provided budget, or fall back to recommendation's estimated price
     let minPrice: number | undefined;
     let maxPrice: number | undefined;
-    
+
     if (budget) {
       minPrice = budget.min;
       maxPrice = budget.max;
@@ -459,7 +460,7 @@ export async function fetchProductsForRecommendation(
       minPrice = Math.max(0, estimatedPrice * 0.8);
       maxPrice = estimatedPrice * 1.2;
     }
-    
+
     // Build query for ProductService
     const query: ProductQuery = {
       categories: [category],
@@ -469,10 +470,10 @@ export async function fetchProductsForRecommendation(
       limit: 10, // Return top 10 matching products
       sortBy: 'popularity',
     };
-    
+
     // Fetch products from configured APIs
     const result = await fetchProducts(query);
-    
+
     // Log result for debugging
     if (result.products.length > 0) {
       console.info(
@@ -490,9 +491,9 @@ export async function fetchProductsForRecommendation(
         );
       }
     }
-    
+
     return result.products;
-    
+
   } catch (error) {
     // Graceful error handling - never throw, just return empty array
     console.error(
@@ -509,17 +510,17 @@ export async function fetchProductsForRecommendation(
 
 /**
  * Fetch products from Printify API
- * 
+ *
  * TODO: Implement actual Printify API integration
  * - API Docs: https://developers.printify.com/
  * - Authentication: Bearer token
  * - Rate limits: Consider implementing rate limiting
- * 
- * @param query - Product query parameters
+ *
+ * @param _query - Product query parameters
  * @returns Promise resolving to array of products
  */
 async function fetchPrintifyProducts(
-  query: ProductQuery
+  _query: ProductQuery
 ): Promise<Product[]> {
   if (!API_CONFIG.printify.enabled) {
     throw new Error('Printify API not configured');
@@ -540,17 +541,17 @@ async function fetchPrintifyProducts(
 
 /**
  * Fetch products from Amazon Product Advertising API
- * 
+ *
  * TODO: Implement actual Amazon PAAPI integration
  * - API Docs: https://webservices.amazon.com/paapi5/documentation/
  * - Authentication: AWS Signature Version 4
  * - Rate limits: 1 request per second (adjust as needed)
- * 
- * @param query - Product query parameters
+ *
+ * @param _query - Product query parameters
  * @returns Promise resolving to array of products
  */
 async function fetchAmazonProducts(
-  query: ProductQuery
+  _query: ProductQuery
 ): Promise<Product[]> {
   if (!API_CONFIG.amazon.enabled) {
     throw new Error('Amazon API not configured');
@@ -574,17 +575,17 @@ async function fetchAmazonProducts(
 
 /**
  * Fetch products from Etsy API
- * 
+ *
  * TODO: Implement actual Etsy API integration
  * - API Docs: https://www.etsy.com/developers/documentation
  * - Authentication: OAuth 2.0 or API key
  * - Rate limits: Consider implementing backoff strategy
- * 
- * @param query - Product query parameters
+ *
+ * @param _query - Product query parameters
  * @returns Promise resolving to array of products
  */
 async function fetchEtsyProducts(
-  query: ProductQuery
+  _query: ProductQuery
 ): Promise<Product[]> {
   if (!API_CONFIG.etsy.enabled) {
     throw new Error('Etsy API not configured');
@@ -608,17 +609,17 @@ async function fetchEtsyProducts(
 
 /**
  * Fetch products from TikTok Shop API
- * 
+ *
  * TODO: Implement actual TikTok Shop API integration
  * - API Docs: https://partner.tiktokshop.com/docv2/page/
  * - Authentication: API key + signature
  * - Rate limits: Check TikTok Shop API documentation
- * 
- * @param query - Product query parameters
+ *
+ * @param _query - Product query parameters
  * @returns Promise resolving to array of products
  */
 async function fetchTikTokShopProducts(
-  query: ProductQuery
+  _query: ProductQuery
 ): Promise<Product[]> {
   if (!API_CONFIG.tiktokShop.enabled) {
     throw new Error('TikTok Shop API not configured');
@@ -648,7 +649,7 @@ async function fetchTikTokShopProducts(
 
 /**
  * Build affiliate URL for a product
- * 
+ *
  * @param product - Product to build affiliate URL for
  * @returns Affiliate URL or product URL if affiliate not available
  */
@@ -689,7 +690,7 @@ export function buildAffiliateUrl(product: Product): string {
 
 /**
  * Filter products by price range
- * 
+ *
  * @param products - Products to filter
  * @param minPrice - Minimum price (inclusive)
  * @param maxPrice - Maximum price (inclusive)
@@ -713,7 +714,7 @@ export function filterByPriceRange(
 
 /**
  * Filter products by tags (any matching tag)
- * 
+ *
  * @param products - Products to filter
  * @param tags - Tags to filter by
  * @returns Filtered products
@@ -723,7 +724,7 @@ export function filterByTags(
   tags: string[]
 ): Product[] {
   const lowercaseTags = tags.map((t) => t.toLowerCase());
-  
+
   return products.filter((product) => {
     const productTags = product.tags.map((t) => t.toLowerCase());
     return lowercaseTags.some((tag) => productTags.includes(tag));
@@ -732,7 +733,7 @@ export function filterByTags(
 
 /**
  * Sort products by specified criteria
- * 
+ *
  * @param products - Products to sort
  * @param sortBy - Sort criteria
  * @returns Sorted products
@@ -781,77 +782,11 @@ export function sortProducts(
 // CACHING FUNCTIONS (Scaffolding)
 // ============================================================================
 
-/**
- * Generate cache key from query parameters
- * 
- * TODO: Implement actual cache key generation
- * 
- * @param query - Product query
- * @returns Cache key string
- */
-function generateCacheKey(query: ProductQuery): string {
-  // TODO: Implement robust cache key generation
-  return JSON.stringify(query);
-}
-
-/**
- * Get cached products
- * 
- * TODO: Implement with Redis or other caching solution
- * - Cache TTL: 1 hour recommended
- * - Consider cache invalidation strategy
- * 
- * @param cacheKey - Cache key
- * @returns Cached result or null
- */
-async function getCachedProducts(
-  cacheKey: string
-): Promise<ProductFetchResult | null> {
-  // TODO: Implement Redis cache lookup
-  // const cached = await redisClient.get(cacheKey);
-  // if (cached) {
-  //   return JSON.parse(cached);
-  // }
-  return null;
-}
-
-/**
- * Cache product fetch results
- * 
- * TODO: Implement with Redis or other caching solution
- * 
- * @param cacheKey - Cache key
- * @param result - Result to cache
- */
-async function cacheProducts(
-  cacheKey: string,
-  result: ProductFetchResult
-): Promise<void> {
-  // TODO: Implement Redis cache storage
-  // await redisClient.setex(cacheKey, 3600, JSON.stringify(result));
-}
-
-/**
- * Get cached product by ID
- * 
- * TODO: Implement with Redis or other caching solution
- * 
- * @param id - Product ID
- * @param source - Product source
- * @returns Cached product or null
- */
-async function getCachedProduct(
-  id: string,
-  source: ProductSource
-): Promise<Product | null> {
-  // TODO: Implement Redis cache lookup
-  // const cacheKey = `product:${source}:${id}`;
-  // const cached = await redisClient.get(cacheKey);
-  // if (cached) {
-  //   return JSON.parse(cached);
-  // }
-  return null;
-}
+// TODO: Implement caching functions
+// - generateCacheKey
+// - getCachedProducts
+// - cacheProducts
+// - getCachedProduct
 
 // ============================================================================
 // PRODUCT TRANSFORMATION HELPERS (For API Integration)
@@ -859,7 +794,7 @@ async function getCachedProduct(
 
 /**
  * Transform Printify product to Product interface
- * 
+ *
  * TODO: Implement when Printify API is integrated
  */
 // function transformPrintifyProduct(printifyProduct: any): Product {
@@ -874,7 +809,7 @@ async function getCachedProduct(
 
 /**
  * Transform Amazon product to Product interface
- * 
+ *
  * TODO: Implement when Amazon PAAPI is integrated
  */
 // function transformAmazonProduct(amazonItem: any): Product {
@@ -888,7 +823,7 @@ async function getCachedProduct(
 
 /**
  * Transform Etsy listing to Product interface
- * 
+ *
  * TODO: Implement when Etsy API is integrated
  */
 // function transformEtsyProduct(etsyListing: any): Product {
@@ -902,7 +837,7 @@ async function getCachedProduct(
 
 /**
  * Transform TikTok Shop product to Product interface
- * 
+ *
  * TODO: Implement when TikTok Shop API is integrated
  */
 // function transformTikTokProduct(tiktokProduct: any): Product {

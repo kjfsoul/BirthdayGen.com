@@ -1,10 +1,10 @@
+/* eslint-disable no-console */
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { AnimatedCard } from "@/components/AnimatedCard"
 import {
     Sparkles,
@@ -12,207 +12,68 @@ import {
     Download,
     Share2,
     Palette,
-    Wand2,
     ArrowLeft,
-    Settings,
     Eye,
     EyeOff
 } from "lucide-react"
-import { cn } from "@/lib/utils"
-
-interface CardData {
-    id: string
-    recipientName: string
-    senderName: string
-    frontMessage: string
-    insideMessage: string
-    theme: 'birthday' | 'holiday' | 'anniversary' | 'custom'
-    frontImage?: string
-    insideImage?: string
-    includeGame?: boolean
-}
+import { ImageEditor } from "@/components/ImageEditor"
 
 export default function CardPage() {
-    const params = useParams()
-    const router = useRouter()
-    const cardId = params?.cardId as string
-
-    const [cardData, setCardData] = useState<CardData | null>(null)
-    const [loading, setLoading] = useState(true)
+    const navigate = useNavigate()
     const [showTools, setShowTools] = useState(true)
-    const [livePreview, setLivePreview] = useState(true)
-    const [auraEnabled, setAuraEnabled] = useState(false)
+    const [cardData, setCardData] = useState({
+        frontMessage: 'Happy Birthday!',
+        insideMessage: 'Wishing you a wonderful day!',
+        recipientName: 'Friend',
+        senderName: 'Me',
+        theme: 'birthday' as const,
+        frontImage: '',
+        insideImage: '',
+        includeGame: true
+    })
 
-    // Fetch card data
-    useEffect(() => {
-        const fetchCard = async () => {
-            try {
-                // TODO: Replace with actual API call
-                // const response = await fetch(`/api/cards/${cardId}`)
-                // const data = await response.json()
-
-                // Mock data for now
-                setCardData({
-                    id: cardId,
-                    recipientName: 'Sarah',
-                    senderName: 'John',
-                    frontMessage: 'Happy Birthday!',
-                    insideMessage: 'Wishing you all the happiness in the world on your special day!',
-                    theme: 'birthday',
-                    includeGame: true
-                })
-            } catch (error) {
-                console.error('Error fetching card:', error)
-            } finally {
-                setLoading(false)
-            }
-        }
-
-        fetchCard()
-    }, [cardId])
-
-    const handleSend = async () => {
-        try {
-            const response = await fetch(`/api/cards/${cardId}/send`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ cardId })
-            })
-
-            if (response.ok) {
-                alert('Card sent successfully!')
-            }
-        } catch (error) {
-            console.error('Error sending card:', error)
-            alert('Failed to send card')
-        }
+    const handleSend = () => {
+        console.log('Sending card...')
     }
 
-    const handleExport = (format: 'png' | 'pdf' | 'gif') => {
-        console.log(`Exporting card as ${format}`)
-        // TODO: Implement export functionality
+    const handleExport = (format: string) => {
+        console.log('Exporting as', format)
     }
 
-    const handleAIPersonalize = () => {
-        setAuraEnabled(!auraEnabled)
-        console.log('AI Personalization toggled:', !auraEnabled)
-        // TODO: Implement AI personalization
-    }
-
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center space-y-4">
-                    <Sparkles className="h-12 w-12 mx-auto animate-spin text-purple-600" />
-                    <p className="text-muted-foreground">Loading your card...</p>
-                </div>
-            </div>
-        )
-    }
-
-    if (!cardData) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center space-y-4">
-                    <p className="text-xl text-muted-foreground">Card not found</p>
-                    <Button onClick={() => router.push('/generator')}>
-                        <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back to Generator
-                    </Button>
-                </div>
-            </div>
-        )
+    // Helper for classNames
+    const cn = (...classes: (string | undefined | null | false)[]) => {
+        return classes.filter(Boolean).join(' ')
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
-            {/* Header */}
-            <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b">
-                <div className="max-w-7xl mx-auto px-4 py-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => router.push('/generator')}
-                            >
-                                <ArrowLeft className="h-4 w-4 mr-2" />
-                                Back
-                            </Button>
-                            <div>
-                                <h1 className="text-xl font-display font-bold text-purple-600">
-                                    {cardData.frontMessage}
-                                </h1>
-                                <p className="text-sm text-muted-foreground">
-                                    For {cardData.recipientName}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center space-x-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setShowTools(!showTools)}
-                            >
-                                <Settings className="h-4 w-4 mr-2" />
-                                {showTools ? 'Hide' : 'Show'} Tools
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setLivePreview(!livePreview)}
-                            >
-                                {livePreview ? (
-                                    <Eye className="h-4 w-4 mr-2" />
-                                ) : (
-                                    <EyeOff className="h-4 w-4 mr-2" />
-                                )}
-                                Preview
-                            </Button>
-                        </div>
+        <div className="min-h-screen bg-gray-50 py-8 px-4">
+            <div className="max-w-7xl mx-auto">
+                <div className="flex items-center justify-between mb-8">
+                    <Button variant="ghost" onClick={() => navigate(-1)}>
+                        <ArrowLeft className="h-4 w-4 mr-2" />
+                        Back
+                    </Button>
+                    <div className="flex space-x-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowTools(!showTools)}
+                        >
+                            {showTools ? <EyeOff className="h-4 w-4 mr-2" /> : <Eye className="h-4 w-4 mr-2" />}
+                            {showTools ? 'Hide Tools' : 'Show Tools'}
+                        </Button>
                     </div>
                 </div>
-            </div>
 
-            <div className="max-w-7xl mx-auto px-4 py-8">
                 <div className="grid lg:grid-cols-3 gap-8">
-                    {/* Tools Panel */}
                     {showTools && (
-                        <div className="lg:col-span-1 space-y-4">
-                            {/* AI Personalization */}
-                            <Card className={cn(
-                                "transition-all duration-300",
-                                auraEnabled && "ring-2 ring-purple-500 shadow-lg shadow-purple-200"
-                            )}>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center text-lg">
-                                        <Wand2 className="h-5 w-5 mr-2 text-purple-600" />
-                                        AI Personalization
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-3">
-                                    <Button
-                                        onClick={handleAIPersonalize}
-                                        className={cn(
-                                            "w-full",
-                                            auraEnabled
-                                                ? "bg-gradient-to-r from-purple-600 to-pink-600"
-                                                : "bg-gradient-to-r from-purple-500 to-pink-500"
-                                        )}
-                                    >
-                                        <Sparkles className="h-4 w-4 mr-2" />
-                                        {auraEnabled ? 'Aura Active' : 'Enable Aura'}
-                                    </Button>
-                                    {auraEnabled && (
-                                        <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
-                                            <p className="text-sm text-purple-700">
-                                                ✨ AI is personalizing your card based on recipient's aura
-                                            </p>
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
+                        <div className="lg:col-span-1 space-y-6">
+                            {/* AI Magic Studio */}
+                            <ImageEditor
+                                currentImageUrl={cardData.frontImage}
+                                onImageUpdate={(newUrl) => setCardData(prev => ({ ...prev, frontImage: newUrl }))}
+                                userCredits={5}
+                            />
 
                             {/* Color Palette */}
                             <Card>
@@ -298,19 +159,10 @@ export default function CardPage() {
                                         <Eye className="h-5 w-5 mr-2 text-blue-600" />
                                         Live Preview
                                     </CardTitle>
-                                    {auraEnabled && (
-                                        <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 animate-pulse">
-                                            <Sparkles className="h-3 w-3 mr-1" />
-                                            Aura Active
-                                        </Badge>
-                                    )}
                                 </div>
                             </CardHeader>
                             <CardContent className="p-8">
-                                <div className={cn(
-                                    "transition-all duration-500",
-                                    auraEnabled && "blur-fade-in"
-                                )}>
+                                <div className="transition-all duration-500">
                                     <AnimatedCard
                                         frontMessage={cardData.frontMessage}
                                         insideMessage={cardData.insideMessage}

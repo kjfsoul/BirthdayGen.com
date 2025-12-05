@@ -1,12 +1,12 @@
 'use client'
 
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'react-router-dom'
 import { Suspense } from 'react'
 
 function ErrorContent() {
-  const searchParams = useSearchParams()
-  const error = searchParams?.get('error') || null
-  const errorDescription = searchParams?.get('error_description') || null
+  const [searchParams] = useSearchParams()
+  const error = searchParams.get('error') || null
+  const errorDescription = searchParams.get('error_description') || null
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">

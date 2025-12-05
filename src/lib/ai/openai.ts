@@ -1,7 +1,7 @@
 /**
  * OpenAI GPT-4o Integration for Gift Recommendations
  * Module B - Real AI Intelligence (Phase 4)
- * 
+ *
  * Provides GPT-4o-backed gift recommendations with structured outputs.
  * NO mock data, NO fallbacks - fails gracefully with clear errors.
  */
@@ -9,9 +9,7 @@
 import OpenAI from 'openai';
 import { z } from 'zod';
 import type {
-  RecommendationRequest,
   GiftRecommendation,
-  ProductDetails,
   GiftCategory,
   PriceRange,
 } from '@/lib/gifts/schema';
@@ -26,13 +24,13 @@ import type {
  */
 function getOpenAIClient(): OpenAI {
   const apiKey = process.env.OPENAI_API_KEY;
-  
+
   if (!apiKey) {
     throw new Error(
       'OPENAI_API_KEY is not configured. Please set this environment variable to enable AI gift recommendations.'
     );
   }
-  
+
   return new OpenAI({
     apiKey,
   });
@@ -81,8 +79,7 @@ const GiftRecommendationsResponseSchema = z.object({
   top_categories: z.array(z.string()).min(1).max(5),
 });
 
-type GPTRecommendation = z.infer<typeof GiftRecommendationSchema>;
-type GPTRecommendationsResponse = z.infer<typeof GiftRecommendationsResponseSchema>;
+// Removed unused types GPTRecommendation and GPTRecommendationsResponse
 
 // ============================================================================
 // GIFT INPUT TYPE
@@ -97,14 +94,14 @@ export interface GiftInput {
   budgetMin: number;
   budgetMax: number;
   budgetPreferred?: number;
-  
+
   // Enriched data
   giftingStyle?: string;
   interests?: string[];
   threeWords?: string[];
   vibes?: string[];
   archetypes?: string[];
-  
+
   // Preferences
   excludeCategories?: string[];
   preferredCategories?: string[];
@@ -118,7 +115,7 @@ export interface GiftInput {
 
 /**
  * Generate gift recommendations using GPT-4o
- * 
+ *
  * @param input - Gift recommendation input parameters
  * @returns Array of gift recommendations with confidence scores
  * @throws Error if OpenAI API is not configured or request fails
@@ -127,11 +124,11 @@ export async function generateGiftRecommendations(
   input: GiftInput
 ): Promise<GiftRecommendation[]> {
   const client = getOpenAIClient();
-  
+
   // Build context for GPT-4o
   const systemPrompt = buildSystemPrompt();
   const userPrompt = buildUserPrompt(input);
-  
+
   try {
     // Call GPT-4o with structured output using JSON mode
     const completion = await client.chat.completions.create({
@@ -150,17 +147,17 @@ export async function generateGiftRecommendations(
       temperature: 0.8, // Creative but not too random
       max_tokens: 4000,
     });
-    
+
     const responseContent = completion.choices[0]?.message?.content;
-    
+
     if (!responseContent) {
       throw new Error('OpenAI returned empty response');
     }
-    
+
     // Parse and validate response
     const parsedResponse = JSON.parse(responseContent);
     const validatedResponse = GiftRecommendationsResponseSchema.parse(parsedResponse);
-    
+
     // Transform GPT response to our internal format
     const recommendations: GiftRecommendation[] = validatedResponse.recommendations.map(
       (rec, index) => ({
@@ -186,7 +183,7 @@ export async function generateGiftRecommendations(
         personalizeIdea: rec.personalize_idea,
       })
     );
-    
+
     return recommendations;
   } catch (error) {
     // Handle errors gracefully
@@ -196,21 +193,21 @@ export async function generateGiftRecommendations(
         'AI generated invalid gift recommendations. Please try again.'
       );
     }
-    
+
     if (error instanceof OpenAI.APIError) {
       console.error('OpenAI API error:', error.message, error.status);
-      
+
       if (error.status === 401) {
         throw new Error('Invalid OpenAI API key. Please check configuration.');
       }
-      
+
       if (error.status === 429) {
         throw new Error('OpenAI rate limit exceeded. Please try again later.');
       }
-      
+
       throw new Error(`OpenAI API error: ${error.message}`);
     }
-    
+
     console.error('Unexpected error in generateGiftRecommendations:', error);
     throw new Error('Failed to generate gift recommendations. Please try again.');
   }
@@ -279,77 +276,77 @@ IMPORTANT:
  */
 function buildUserPrompt(input: GiftInput): string {
   const parts: string[] = [];
-  
+
   // Recipient basics
   parts.push(`RECIPIENT PROFILE:`);
   parts.push(`- Name: ${input.recipientName}`);
-  
+
   if (input.recipientAge) {
     parts.push(`- Age: ${input.recipientAge}`);
   }
-  
+
   if (input.recipientGender) {
     parts.push(`- Gender: ${input.recipientGender}`);
   }
-  
+
   if (input.relationship) {
     parts.push(`- Relationship: ${input.relationship}`);
   }
-  
+
   // Enriched profile data
   if (input.giftingStyle) {
     parts.push(`- Gifting Style: ${input.giftingStyle}`);
   }
-  
+
   if (input.interests && input.interests.length > 0) {
     parts.push(`- Interests: ${input.interests.join(', ')}`);
   }
-  
+
   if (input.threeWords && input.threeWords.length > 0) {
     parts.push(`- Personality (3 words): ${input.threeWords.join(', ')}`);
   }
-  
+
   if (input.vibes && input.vibes.length > 0) {
     parts.push(`- Vibes/Aesthetics: ${input.vibes.join(', ')}`);
   }
-  
+
   if (input.archetypes && input.archetypes.length > 0) {
     parts.push(`- Archetypes: ${input.archetypes.join(', ')}`);
   }
-  
+
   // Occasion and budget
   parts.push('');
   parts.push(`OCCASION: ${input.occasion}`);
   parts.push('');
   parts.push(`BUDGET:`);
   parts.push(`- Range: $${input.budgetMin} - $${input.budgetMax}`);
-  
+
   if (input.budgetPreferred) {
     parts.push(`- Preferred: $${input.budgetPreferred}`);
   }
-  
+
   // Preferences and constraints
   if (input.preferredCategories && input.preferredCategories.length > 0) {
     parts.push('');
     parts.push(`PREFERRED CATEGORIES: ${input.preferredCategories.join(', ')}`);
   }
-  
+
   if (input.excludeCategories && input.excludeCategories.length > 0) {
     parts.push('');
     parts.push(`EXCLUDE CATEGORIES: ${input.excludeCategories.join(', ')}`);
   }
-  
+
   if (input.shippingRequired !== undefined) {
     parts.push('');
     parts.push(`Shipping Required: ${input.shippingRequired ? 'Yes' : 'No'}`);
   }
-  
+
   if (input.urgency) {
     parts.push(`Urgency: ${input.urgency}`);
   }
-  
+
   parts.push('');
   parts.push('Please generate personalized gift recommendations based on this profile.');
-  
+
   return parts.join('\n');
 }

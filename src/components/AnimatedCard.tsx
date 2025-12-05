@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 'use client'
 
 import { useState, useRef, useEffect, useMemo } from 'react'
@@ -12,7 +13,6 @@ import {
     RotateCcw,
     Share2
 } from "lucide-react"
-import { useCanvas } from '@/hooks/use-canvas'
 import { ParticleSystem } from '@/lib/particles'
 
 interface AnimatedCardProps {
@@ -44,11 +44,6 @@ export function AnimatedCard({
 
     // Particle System
     const particleSystem = useMemo(() => new ParticleSystem(50), [])
-
-    const onDrawParticles = (ctx: CanvasRenderingContext2D, deltaTime: number) => {
-        particleSystem.update(deltaTime)
-        particleSystem.draw(ctx)
-    }
 
     // const particleCanvasRef = useCanvas({
     //     animate: isOpen,

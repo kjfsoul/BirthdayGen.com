@@ -15,7 +15,7 @@ export function ImportFacebook() {
     if (!selectedFile) return;
 
     const isValidType = selectedFile.name.toLowerCase().endsWith('.zip') ||
-                       selectedFile.name.toLowerCase().endsWith('.json');
+      selectedFile.name.toLowerCase().endsWith('.json');
 
     if (!isValidType) {
       toast.error('Please select a .zip or .json file from Facebook Data Download');
@@ -70,7 +70,7 @@ export function ImportFacebook() {
             className="cursor-pointer"
           />
           <p className="text-sm text-muted-foreground mt-1">
-            Upload Facebook "Download Your Information" ZIP or JSON file
+            Upload Facebook &quot;Download Your Information&quot; ZIP or JSON file
           </p>
         </div>
 

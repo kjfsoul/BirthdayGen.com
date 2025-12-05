@@ -60,7 +60,7 @@ export function useCanvas(options: UseCanvasOptions = {}) {
             resizeObserver.disconnect()
             clearTimeout(timeoutId)
         }
-    }, [options.onResize])
+    }, [options])
 
     useEffect(() => {
         if (options.animate) {
