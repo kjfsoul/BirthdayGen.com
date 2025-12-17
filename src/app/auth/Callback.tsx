@@ -1,12 +1,17 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase/client';
 
 export default function AuthCallback() {
     const navigate = useNavigate();
 
+    const processedRef = useRef(false);
+
     useEffect(() => {
         const handleAuthCallback = async () => {
+            if (processedRef.current) return;
+            processedRef.current = true;
+
             const { searchParams } = new URL(window.location.href);
             const code = searchParams.get('code');
             const next = searchParams.get('next') || '/contacts';

@@ -4,6 +4,7 @@ import React, { useState, useRef, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Tilt } from 'react-tilt'
 import { useDroppable, useDraggable } from '@dnd-kit/core'
+import { Snowfall } from '@/components/generator/Snowfall'
 import { getTemplate, type TemplateConfig } from '@/config/templates'
 import {
     PartyPopper,
@@ -172,39 +173,10 @@ export function CardStage({
         perspective: 1000, // Perspective setting
     }
 
+
     return (
         <div className="perspective-1000 w-full">
-            {/* Mode Toggle Buttons */}
-            <div className="flex justify-center items-center gap-3 mb-4">
-                {/* Preview Mode Toggle */}
-                <button
-                    onClick={() => setIsPreviewMode(!isPreviewMode)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full shadow-lg transition-all duration-300 hover:scale-105 ${isPreviewMode
-                        ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
-                        : 'bg-white text-gray-700 border-2 border-gray-300'
-                        }`}
-                >
-                    <Sparkles className="h-4 w-4" />
-                    <span className="text-sm font-medium">
-                        {isPreviewMode ? 'Preview Mode' : 'Edit Mode'}
-                    </span>
-                </button>
-
-                {/* Flip Toggle Button - Only in Edit Mode */}
-                {!isPreviewMode && (
-                    <button
-                        onClick={() => setIsFlipped(!isFlipped)}
-                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-                    >
-                        <RotateCcw className="h-4 w-4" />
-                        <span className="text-sm font-medium">
-                            {isFlipped ? 'View Front' : 'Write Message'}
-                        </span>
-                    </button>
-                )}
-            </div>
-
-            {/* 3D Card Container */}
+            {/* 3D Card Container - Always in Preview Mode */}
             <Tilt options={tiltOptions} className="w-full">
                 <div
                     ref={cardRef}

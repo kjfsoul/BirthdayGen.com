@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => {
             'process.env': env
         },
         server: {
-            port: 3000,
+            port: 9102,
             proxy: {
                 '/api': {
                     target: 'http://localhost:3001', // Placeholder for backend if needed
