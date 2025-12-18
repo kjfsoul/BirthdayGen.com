@@ -141,6 +141,20 @@ export interface ProductFetchResult {
 }
 
 // ============================================================================
+// CACHING STATE
+// ============================================================================
+
+interface CacheEntry<T> {
+  data: T;
+  expiry: number;
+}
+
+// In-memory cache stores
+const productCache = new Map<string, CacheEntry<Product>>();
+const queryCache = new Map<string, CacheEntry<ProductFetchResult>>();
+const CACHE_TTL = 3600000; // 1 hour
+
+// ============================================================================
 // CORE PRODUCT FETCHING FUNCTIONS
 // ============================================================================
 
@@ -358,9 +372,9 @@ export async function getProductById(
   id: string,
   source: ProductSource
 ): Promise<Product | null> {
-  // TODO: Check cache first
-  // const cachedProduct = await getCachedProduct(id, source);
-  // if (cachedProduct) return cachedProduct;
+  // Check cache first
+  const cachedProduct = await getCachedProduct(id, source);
+  if (cachedProduct) return cachedProduct;
 
   // Check if source is configured
   const sourceKey =
@@ -392,7 +406,8 @@ export async function getProductById(
     );
 
     if (product) {
-      // TODO: Cache the product
+      // Cache the product for future lookups
+      await cacheProduct(product);
       return product;
     }
 
@@ -779,14 +794,101 @@ export function sortProducts(
 }
 
 // ============================================================================
-// CACHING FUNCTIONS (Scaffolding)
+// CACHING FUNCTIONS
 // ============================================================================
 
-// TODO: Implement caching functions
-// - generateCacheKey
-// - getCachedProducts
-// - cacheProducts
-// - getCachedProduct
+/**
+ * Generate a cache key for a single product
+ */
+function generateProductCacheKey(id: string, source: ProductSource): string {
+  return `${source}:${id}`;
+}
+
+/**
+ * Generate a cache key for a product query
+ */
+export function generateCacheKey(query: ProductQuery): string {
+  // Sort keys to ensure consistent order for same query
+  const sortedQuery = Object.keys(query)
+    .sort()
+    .reduce((acc, key) => {
+      acc[key as keyof ProductQuery] = query[key as keyof ProductQuery] as any;
+      return acc;
+    }, {} as Partial<ProductQuery>);
+
+  return JSON.stringify(sortedQuery);
+}
+
+/**
+ * Get a product from cache
+ */
+export async function getCachedProduct(
+  id: string,
+  source: ProductSource
+): Promise<Product | null> {
+  const key = generateProductCacheKey(id, source);
+  const entry = productCache.get(key);
+
+  if (!entry) return null;
+
+  // Check expiry
+  if (Date.now() > entry.expiry) {
+    productCache.delete(key);
+    return null;
+  }
+
+  return entry.data;
+}
+
+/**
+ * Cache a product
+ */
+export async function cacheProduct(product: Product): Promise<void> {
+  const key = generateProductCacheKey(product.id, product.source);
+
+  productCache.set(key, {
+    data: product,
+    expiry: Date.now() + CACHE_TTL,
+  });
+}
+
+/**
+ * Get products from cache (query result)
+ */
+export async function getCachedProducts(
+  key: string
+): Promise<ProductFetchResult | null> {
+  const entry = queryCache.get(key);
+
+  if (!entry) return null;
+
+  // Check expiry
+  if (Date.now() > entry.expiry) {
+    queryCache.delete(key);
+    return null;
+  }
+
+  return entry.data;
+}
+
+/**
+ * Cache product query results
+ */
+export async function cacheProducts(
+  key: string,
+  result: ProductFetchResult
+): Promise<void> {
+  queryCache.set(key, {
+    data: result,
+    expiry: Date.now() + CACHE_TTL,
+  });
+
+  // Also cache individual products from the result
+  // This helps populate the single-product cache
+  for (const product of result.products) {
+    await cacheProduct(product);
+  }
+}
 
 // ============================================================================
 // PRODUCT TRANSFORMATION HELPERS (For API Integration)
