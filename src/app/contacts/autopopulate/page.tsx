@@ -22,6 +22,7 @@ import {
 import type { EnrichedContact } from '@/lib/autopopulate/types';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { EditContactDialog } from '@/components/autopopulate/EditContactDialog';
 
 /**
  * Auto-Populate Contacts Page
@@ -50,6 +51,8 @@ export default function AutoPopulatePage() {
   const [currentContact] = useState<string>();
   const [errorMessage, setErrorMessage] = useState<string>();
   const [enrichedContacts, setEnrichedContacts] = useState<EnrichedContact[]>([]);
+  const [editingContact, setEditingContact] = useState<EnrichedContact | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Handlers
   const handleEnrichmentStart = useCallback(() => {
@@ -137,6 +140,17 @@ export default function AutoPopulatePage() {
   const handleRejectAll = useCallback(async () => {
     // Discard all enriched data
     setEnrichedContacts([]);
+  }, []);
+
+  const handleEditContact = useCallback((contact: EnrichedContact) => {
+    setEditingContact(contact);
+    setIsEditModalOpen(true);
+  }, []);
+
+  const handleSaveContact = useCallback((updatedContact: EnrichedContact) => {
+    setEnrichedContacts(prev => prev.map(c => c.id === updatedContact.id ? updatedContact : c));
+    setIsEditModalOpen(false);
+    setEditingContact(null);
   }, []);
 
   return (
@@ -282,13 +296,18 @@ export default function AutoPopulatePage() {
           {/* Enriched Contacts Display */}
           <EnrichedContactsDisplay
             contacts={enrichedContacts}
-            onEditContact={(contact) => {
-              console.log('Edit contact:', contact);
-              // TODO: Open edit modal
-            }}
+            onEditContact={handleEditContact}
           />
         </>
       )}
+
+      {/* Edit Modal */}
+      <EditContactDialog
+        contact={editingContact}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSave={handleSaveContact}
+      />
 
       {/* Usage Instructions */}
       <Card>
