@@ -2,33 +2,17 @@
  * Rate Limiting for Enrichment API
  * Phase 4 Module A Step 2 - BirthdayGen.com
  * 
- * IMPORTANT: This is an in-memory implementation suitable for single-instance deployments.
+ * IMPORTANT: This implementation supports both in-memory (development) and Redis (production).
  * 
- * TODO: PRODUCTION DEPLOYMENT REQUIREMENTS
+ * PRODUCTION DEPLOYMENT REQUIREMENTS
  * ========================================
- * For production/multi-instance deployments, replace with distributed cache:
- * 
- * Option 1 - Redis (Recommended for self-hosted):
- *   - Use @upstash/redis or ioredis
- *   - Implement sliding window or token bucket algorithm
- *   - Configure TTL for automatic cleanup
- * 
- * Option 2 - Upstash Redis (Recommended for serverless):
- *   - Use @upstash/redis (built for serverless/edge)
- *   - Serverless-friendly pricing model
- *   - Global edge network
- * 
- * Option 3 - Supabase (Not recommended for rate limiting):
- *   - Possible but adds database load for every request
- *   - Higher latency than in-memory cache
- *   - Use only if Redis/Upstash is not available
- * 
- * Current Implementation Notes:
- * - In-memory Map will reset on server restart
- * - Not shared across multiple server instances
- * - Suitable for development and single-instance MVP deployments only
+ * Ensure the following environment variables are set:
+ * - UPSTASH_REDIS_REST_URL
+ * - UPSTASH_REDIS_REST_TOKEN
  */
 
+import { Redis } from '@upstash/redis';
+import { Ratelimit } from '@upstash/ratelimit';
 import type { RateLimitConfig, RateLimitStatus } from './types';
 
 // Rate limit configuration
@@ -39,8 +23,65 @@ const RATE_LIMIT_CONFIG: RateLimitConfig = {
   burstLimit: 10, // Max 10 requests in 10 seconds
 };
 
-// In-memory rate limit tracking
-// TODO: Replace with Redis/Upstash in production
+// Redis client initialization (lazy)
+let redis: Redis | null = null;
+let limiters: {
+  burst: Ratelimit;
+  minute: Ratelimit;
+  hour: Ratelimit;
+  day: Ratelimit;
+} | null = null;
+let isInitialized = false;
+
+function getLimiters() {
+  if (isInitialized) return limiters;
+
+  isInitialized = true;
+
+  try {
+    // Check for Upstash Redis variables
+    if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+      redis = new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN,
+      });
+
+      limiters = {
+        burst: new Ratelimit({
+          redis,
+          limiter: Ratelimit.slidingWindow(RATE_LIMIT_CONFIG.burstLimit, "10 s"),
+          prefix: "@upstash/ratelimit:burst",
+          analytics: true,
+        }),
+        minute: new Ratelimit({
+          redis,
+          limiter: Ratelimit.slidingWindow(RATE_LIMIT_CONFIG.maxRequestsPerMinute, "1 m"),
+          prefix: "@upstash/ratelimit:minute",
+          analytics: true,
+        }),
+        hour: new Ratelimit({
+          redis,
+          limiter: Ratelimit.slidingWindow(RATE_LIMIT_CONFIG.maxRequestsPerHour, "1 h"),
+          prefix: "@upstash/ratelimit:hour",
+          analytics: true,
+        }),
+        day: new Ratelimit({
+          redis,
+          limiter: Ratelimit.slidingWindow(RATE_LIMIT_CONFIG.maxRequestsPerDay, "1 d"),
+          prefix: "@upstash/ratelimit:day",
+          analytics: true,
+        }),
+      };
+    }
+  } catch (error) {
+    console.warn("Failed to initialize Redis rate limiter, falling back to in-memory:", error);
+    limiters = null;
+  }
+
+  return limiters;
+}
+
+// In-memory fallback
 interface RateLimitRecord {
   minute: { count: number; resetAt: Date };
   hour: { count: number; resetAt: Date };
@@ -52,26 +93,70 @@ const rateLimitStore = new Map<string, RateLimitRecord>();
 
 /**
  * Check rate limit for a user
- * 
- * TODO: In production, implement with Redis:
- * ```typescript
- * import { Redis } from '@upstash/redis';
- * const redis = Redis.fromEnv();
- * 
- * export async function checkRateLimit(userId: string): Promise<RateLimitStatus> {
- *   const key = `rate_limit:${userId}`;
- *   const count = await redis.incr(key);
- *   await redis.expire(key, 60); // 60 seconds TTL
- *   
- *   if (count > RATE_LIMIT_CONFIG.maxRequestsPerMinute) {
- *     return { allowed: false, remaining: 0, resetAt: ... };
- *   }
- *   
- *   return { allowed: true, remaining: RATE_LIMIT_CONFIG.maxRequestsPerMinute - count, ... };
- * }
- * ```
  */
 export async function checkRateLimit(userId: string): Promise<RateLimitStatus> {
+  const limits = getLimiters();
+  if (limits) {
+    return checkRateLimitRedis(userId, limits);
+  }
+  return checkRateLimitMemory(userId);
+}
+
+/**
+ * Redis implementation of rate limiting
+ */
+async function checkRateLimitRedis(
+  userId: string,
+  limits: NonNullable<typeof limiters>
+): Promise<RateLimitStatus> {
+  try {
+    // Check all limits in parallel
+    const [burst, minute, hour, day] = await Promise.all([
+      limits.burst.limit(userId),
+      limits.minute.limit(userId),
+      limits.hour.limit(userId),
+      limits.day.limit(userId)
+    ]);
+
+    const results = [burst, minute, hour, day];
+    const blocked = results.find(r => !r.success);
+
+    if (blocked) {
+      return {
+        allowed: false,
+        remaining: 0,
+        resetAt: new Date(blocked.reset),
+        retryAfter: Math.ceil((blocked.reset - Date.now()) / 1000)
+      };
+    }
+
+    // Find the most restrictive remaining count
+    const minRemaining = Math.min(...results.map(r => r.remaining));
+
+    // Use the reset time of the limiter that has the least remaining relative to its window?
+    // Let's use the one with minimum remaining count for consistency
+    const limitingResult = results.reduce((prev, curr) => prev.remaining < curr.remaining ? prev : curr);
+
+    return {
+      allowed: true,
+      remaining: minRemaining,
+      resetAt: new Date(limitingResult.reset),
+    };
+  } catch (error) {
+    console.error("Redis rate limit check failed:", error);
+    // Fallback to fail-open (allow) with warning
+    return {
+      allowed: true,
+      remaining: 1,
+      resetAt: new Date(),
+    };
+  }
+}
+
+/**
+ * In-memory implementation of rate limiting
+ */
+async function checkRateLimitMemory(userId: string): Promise<RateLimitStatus> {
   const now = Date.now();
   const record = getOrCreateRecord(userId);
   
@@ -167,8 +252,7 @@ export async function checkRateLimit(userId: string): Promise<RateLimitStatus> {
 }
 
 /**
- * Get or create rate limit record
- * TODO: Replace with Redis key in production
+ * Get or create rate limit record (Memory only helper)
  */
 function getOrCreateRecord(userId: string): RateLimitRecord {
   const existing = rateLimitStore.get(userId);
@@ -201,21 +285,71 @@ function getOrCreateRecord(userId: string): RateLimitRecord {
 
 /**
  * Reset rate limit for a user (admin function)
- * TODO: Implement with Redis DEL command in production
  */
 export async function resetRateLimit(userId: string): Promise<void> {
+  const limits = getLimiters();
+  if (limits) {
+    try {
+      await Promise.all([
+        limits.burst.resetUsedTokens(userId),
+        limits.minute.resetUsedTokens(userId),
+        limits.hour.resetUsedTokens(userId),
+        limits.day.resetUsedTokens(userId),
+      ]);
+    } catch (error) {
+       console.warn("Failed to reset Redis rate limit:", error);
+    }
+    return;
+  }
   rateLimitStore.delete(userId);
 }
 
 /**
  * Get rate limit stats for a user
- * TODO: Implement with Redis multi-key GET in production
  */
 export async function getRateLimitStats(userId: string): Promise<{
   minute: { used: number; limit: number; resetAt: Date };
   hour: { used: number; limit: number; resetAt: Date };
   day: { used: number; limit: number; resetAt: Date };
 }> {
+  const limits = getLimiters();
+  if (limits) {
+    try {
+      // Use rate: 0 to check status without consuming tokens
+      const [minute, hour, day] = await Promise.all([
+        limits.minute.limit(userId, { rate: 0 }),
+        limits.hour.limit(userId, { rate: 0 }),
+        limits.day.limit(userId, { rate: 0 }),
+      ]);
+
+      return {
+        minute: {
+          used: minute.limit - minute.remaining,
+          limit: minute.limit,
+          resetAt: new Date(minute.reset)
+        },
+        hour: {
+          used: hour.limit - hour.remaining,
+          limit: hour.limit,
+          resetAt: new Date(hour.reset)
+        },
+        day: {
+          used: day.limit - day.remaining,
+          limit: day.limit,
+          resetAt: new Date(day.reset)
+        },
+      };
+    } catch (error) {
+      console.error("Failed to fetch Redis rate limit stats:", error);
+      // Fallback to empty stats if Redis fails
+      return {
+        minute: { used: 0, limit: RATE_LIMIT_CONFIG.maxRequestsPerMinute, resetAt: new Date() },
+        hour: { used: 0, limit: RATE_LIMIT_CONFIG.maxRequestsPerHour, resetAt: new Date() },
+        day: { used: 0, limit: RATE_LIMIT_CONFIG.maxRequestsPerDay, resetAt: new Date() },
+      };
+    }
+  }
+
   const record = getOrCreateRecord(userId);
   
   return {
