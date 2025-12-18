@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase/client';
 
 interface AutoPopulateButtonProps {
   contactIds?: string[]; // Optional: specific contacts to enrich (UUIDs)
@@ -40,6 +41,13 @@ export function AutoPopulateButton({
       setIsEnriching(true);
       onEnrichmentStart?.();
 
+      // Get current user
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        throw new Error('You must be logged in to enrich contacts');
+      }
+
       // Fetch contacts to enrich
       const contactsResponse = await fetch('/api/contacts');
       if (!contactsResponse.ok) {
@@ -64,7 +72,7 @@ export function AutoPopulateButton({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': 'current-user', // TODO: Replace with actual auth
+          'x-user-id': user.id,
         },
         body: JSON.stringify({
           contacts: contactsToEnrich.map((c: any) => ({
