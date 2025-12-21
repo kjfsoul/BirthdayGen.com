@@ -17,6 +17,7 @@
  */
 
 import type { Product, ProductSource, GiftCategory } from './schema';
+import { getRedisClient } from '../redis';
 
 // ============================================================================
 // CONFIGURATION & ENVIRONMENT
@@ -149,10 +150,14 @@ interface CacheEntry<T> {
   expiry: number;
 }
 
-// In-memory cache stores
+// In-memory cache stores (fallback)
 const productCache = new Map<string, CacheEntry<Product>>();
 const queryCache = new Map<string, CacheEntry<ProductFetchResult>>();
 const CACHE_TTL = 3600000; // 1 hour
+
+// Redis key prefixes
+const REDIS_PRODUCT_PREFIX = 'product:';
+const REDIS_QUERY_PREFIX = 'query:';
 
 // ============================================================================
 // CORE PRODUCT FETCHING FUNCTIONS
@@ -196,6 +201,13 @@ export async function fetchProducts(
     'tiktok_shop',
   ];
 
+  // Check cache before making API calls
+  const cacheKey = generateCacheKey(query);
+  const cachedResult = await getCachedProducts(cacheKey);
+  if (cachedResult) {
+    return { ...cachedResult, cached: true };
+  }
+
   // Check if any sources are configured
   const configuredSources = sourcesToQuery.filter((source) => {
     const sourceKey = source === 'tiktok_shop' ? 'tiktokShop' : source;
@@ -217,13 +229,6 @@ export async function fetchProducts(
       cached: false,
     };
   }
-
-  // TODO: Check cache before making API calls
-  // const cacheKey = generateCacheKey(query);
-  // const cachedResult = await getCachedProducts(cacheKey);
-  // if (cachedResult) {
-  //   return { ...cachedResult, cached: true };
-  // }
 
   // Fetch from all configured sources in parallel
   const sourceResults = await Promise.allSettled(
@@ -308,20 +313,17 @@ export async function fetchProducts(
   // Apply pagination
   const paginatedProducts = filteredProducts.slice(offset, offset + limit);
 
-  // TODO: Cache the results
-  // await cacheProducts(cacheKey, {
-  //   products: paginatedProducts,
-  //   totalCount: filteredProducts.length,
-  //   sources: sourceMetadata,
-  //   cached: false,
-  // });
-
-  return {
+  const result: ProductFetchResult = {
     products: paginatedProducts,
     totalCount: filteredProducts.length,
     sources: sourceMetadata,
     cached: false,
   };
+
+  // Cache the results
+  await cacheProducts(cacheKey, result);
+
+  return result;
 }
 
 /**
@@ -827,6 +829,20 @@ export async function getCachedProduct(
   source: ProductSource
 ): Promise<Product | null> {
   const key = generateProductCacheKey(id, source);
+
+  // Try Redis first
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      const redisKey = `${REDIS_PRODUCT_PREFIX}${key}`;
+      const cached = await redis.get<Product>(redisKey);
+      if (cached) return cached;
+    } catch (error) {
+      console.warn('[ProductService] Redis get error:', error);
+    }
+  }
+
+  // Fallback to in-memory
   const entry = productCache.get(key);
 
   if (!entry) return null;
@@ -846,6 +862,19 @@ export async function getCachedProduct(
 export async function cacheProduct(product: Product): Promise<void> {
   const key = generateProductCacheKey(product.id, product.source);
 
+  // Try Redis first
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      const redisKey = `${REDIS_PRODUCT_PREFIX}${key}`;
+      // Set with TTL (seconds)
+      await redis.set(redisKey, product, { ex: Math.floor(CACHE_TTL / 1000) });
+    } catch (error) {
+      console.warn('[ProductService] Redis set error:', error);
+    }
+  }
+
+  // Always update in-memory cache as fallback/local cache
   productCache.set(key, {
     data: product,
     expiry: Date.now() + CACHE_TTL,
@@ -858,6 +887,19 @@ export async function cacheProduct(product: Product): Promise<void> {
 export async function getCachedProducts(
   key: string
 ): Promise<ProductFetchResult | null> {
+  // Try Redis first
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      const redisKey = `${REDIS_QUERY_PREFIX}${key}`;
+      const cached = await redis.get<ProductFetchResult>(redisKey);
+      if (cached) return cached;
+    } catch (error) {
+      console.warn('[ProductService] Redis query get error:', error);
+    }
+  }
+
+  // Fallback to in-memory
   const entry = queryCache.get(key);
 
   if (!entry) return null;
@@ -878,6 +920,18 @@ export async function cacheProducts(
   key: string,
   result: ProductFetchResult
 ): Promise<void> {
+  // Try Redis first
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      const redisKey = `${REDIS_QUERY_PREFIX}${key}`;
+      await redis.set(redisKey, result, { ex: Math.floor(CACHE_TTL / 1000) });
+    } catch (error) {
+      console.warn('[ProductService] Redis query set error:', error);
+    }
+  }
+
+  // Update in-memory cache
   queryCache.set(key, {
     data: result,
     expiry: Date.now() + CACHE_TTL,
@@ -885,9 +939,9 @@ export async function cacheProducts(
 
   // Also cache individual products from the result
   // This helps populate the single-product cache
-  for (const product of result.products) {
-    await cacheProduct(product);
-  }
+  // We do this asynchronously to not block the response
+  Promise.all(result.products.map(product => cacheProduct(product)))
+    .catch(err => console.error('[ProductService] Error caching individual products:', err));
 }
 
 // ============================================================================
