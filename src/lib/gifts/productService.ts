@@ -16,7 +16,8 @@
  * - TIKTOK_SHOP_API_SECRET: TikTok Shop API secret
  */
 
-import type { Product, ProductSource, GiftCategory } from './schema';
+import crypto from 'crypto';
+import { GiftCategory, type Product, type ProductSource } from './schema';
 
 // ============================================================================
 // CONFIGURATION & ENVIRONMENT
@@ -634,28 +635,76 @@ async function fetchEtsyProducts(
  * @returns Promise resolving to array of products
  */
 async function fetchTikTokShopProducts(
-  _query: ProductQuery
+  query: ProductQuery
 ): Promise<Product[]> {
   if (!API_CONFIG.tiktokShop.enabled) {
     throw new Error('TikTok Shop API not configured');
   }
 
-  // TODO: Implement TikTok Shop API call
-  // - Implement signature generation for requests
-  // - Map product data to Product interface
-  // const timestamp = Date.now();
-  // const signature = generateTikTokSignature(timestamp);
-  // const response = await fetch(
-  //   `${API_CONFIG.tiktokShop.baseUrl}/api/products/search`,
-  //   {
-  //     headers: {
-  //       'x-tts-access-token': API_CONFIG.tiktokShop.apiKey,
-  //     },
-  //   }
-  // );
+  // Use a placeholder path for Product Search
+  // Note: This endpoint path should be verified with TikTok Shop Partner Center documentation
+  // The official documentation suggests different paths for different regions/versions.
+  // We use a common pattern for V202309 API.
+  const path = '/product/202309/products/search';
+  const url = `${API_CONFIG.tiktokShop.baseUrl}${path}`;
 
-  console.info('[ProductService] TikTok Shop API integration pending implementation');
-  return [];
+  const appKey = API_CONFIG.tiktokShop.apiKey!;
+  const appSecret = API_CONFIG.tiktokShop.apiSecret!;
+
+  // Prepare request body
+  const requestBody = {
+    keyword: query.searchQuery || (query.categories && query.categories[0]) || '',
+    page_size: query.limit || 20,
+    page_number: query.offset ? Math.floor(query.offset / (query.limit || 20)) + 1 : 1,
+    price_min: query.minPrice,
+    price_max: query.maxPrice,
+  };
+
+  // Generate signature
+  const params = {
+    app_key: appKey,
+    // Note: 'shop_cipher' or 'access_token' is usually required for Seller API.
+    // Assuming we are using a public or partner-level search if available.
+    // If not, this call might fail with "Access Denied" or similar until an access token is provided.
+  };
+
+  const { signature, timestamp } = generateTikTokSignature(appSecret, path, params, requestBody);
+
+  // Construct URL with query params
+  const urlWithParams = new URL(url);
+  urlWithParams.searchParams.set('app_key', appKey);
+  urlWithParams.searchParams.set('timestamp', timestamp.toString());
+  urlWithParams.searchParams.set('sign', signature);
+
+  try {
+    const response = await fetch(urlWithParams.toString(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      throw new Error(`TikTok Shop API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    if (data.code !== 0) { // TikTok API usually returns code 0 for success
+       throw new Error(`TikTok Shop API error code ${data.code}: ${data.message}`);
+    }
+
+    // Map response to Product interface
+    // Assuming data.data.products is the array
+    const products = (data.data?.products || []).map((p: any) => transformTikTokProduct(p));
+    return products;
+
+  } catch (error) {
+    console.error('[ProductService] TikTok Shop API call failed:', error);
+    // Return empty array to avoid breaking the aggregated fetch
+    return [];
+  }
 }
 
 // ============================================================================
@@ -890,6 +939,62 @@ export async function cacheProducts(
   }
 }
 
+/**
+ * Generate TikTok Shop API Signature (HMAC-SHA256)
+ *
+ * Algorithm:
+ * 1. Extract all query parameters (excluding sign and access_token)
+ * 2. Sort parameters alphabetically by key
+ * 3. Concatenate key+value
+ * 4. Prepend API path
+ * 5. Append request body (if present)
+ * 6. Wrap with app_secret
+ * 7. Generate HMAC-SHA256
+ *
+ * @param appSecret - TikTok Shop App Secret
+ * @param path - API Path (e.g. /product/202309/products/search)
+ * @param params - Query parameters
+ * @param body - Request body (optional)
+ */
+export function generateTikTokSignature(
+  appSecret: string,
+  path: string,
+  params: Record<string, string | number>,
+  body?: any
+): { signature: string; timestamp: number } {
+  const timestamp = Math.floor(Date.now() / 1000);
+  const paramsWithTimestamp = { ...params, timestamp };
+
+  // 1. Sort keys (excluding sign and access_token)
+  const sortedKeys = Object.keys(paramsWithTimestamp)
+    .filter((k) => k !== 'sign' && k !== 'access_token')
+    .sort();
+
+  // 2. Concatenate key+value
+  let input = '';
+  for (const key of sortedKeys) {
+    input += `${key}${paramsWithTimestamp[key]}`;
+  }
+
+  // 3. Prepend path
+  input = path + input;
+
+  // 4. Append body
+  if (body && Object.keys(body).length > 0) {
+    input += JSON.stringify(body);
+  }
+
+  // 5. Wrap with secret
+  const plainText = `${appSecret}${input}${appSecret}`;
+
+  // 6. HMAC-SHA256
+  const hmac = crypto.createHmac('sha256', appSecret);
+  hmac.update(plainText);
+  const signature = hmac.digest('hex');
+
+  return { signature, timestamp };
+}
+
 // ============================================================================
 // PRODUCT TRANSFORMATION HELPERS (For API Integration)
 // ============================================================================
@@ -939,14 +1044,47 @@ export async function cacheProducts(
 
 /**
  * Transform TikTok Shop product to Product interface
- *
- * TODO: Implement when TikTok Shop API is integrated
  */
-// function transformTikTokProduct(tiktokProduct: any): Product {
-//   return {
-//     id: tiktokProduct.product_id,
-//     source: 'tiktok_shop',
-//     name: tiktokProduct.product_name,
-//     // ... map other fields
-//   };
-// }
+function transformTikTokProduct(tiktokProduct: any): Product {
+  // Map fields safely
+  const id = tiktokProduct.product_id || tiktokProduct.id || 'unknown';
+  const name = tiktokProduct.product_name || tiktokProduct.name || 'Unknown Product';
+  const description = tiktokProduct.description || '';
+
+  // Handle complex price objects if present
+  let price = 0;
+  if (typeof tiktokProduct.price === 'object' && tiktokProduct.price !== null) {
+    price = tiktokProduct.price.min_price || tiktokProduct.price.price || 0;
+  } else {
+    price = Number(tiktokProduct.price) || 0;
+  }
+
+  // Use the first image
+  let imageUrl = '';
+  if (Array.isArray(tiktokProduct.images) && tiktokProduct.images.length > 0) {
+    const firstImg = tiktokProduct.images[0];
+    imageUrl = typeof firstImg === 'string' ? firstImg : (firstImg.url_list?.[0] || '');
+  }
+
+  // Construct a product URL if not provided
+  const productUrl = tiktokProduct.product_url || `https://shop.tiktok.com/view/product/${id}`;
+
+  return {
+    id: String(id),
+    source: 'tiktok_shop',
+    name,
+    description,
+    category: GiftCategory.TECH, // Default category as specific mapping requires more logic
+    price,
+    currency: tiktokProduct.currency || 'USD',
+    imageUrl,
+    productUrl,
+    vendorName: tiktokProduct.shop_name || 'TikTok Shop',
+    tags: [],
+    metadata: {
+      rating: tiktokProduct.rating,
+      reviewCount: tiktokProduct.review_count,
+      soldCount: tiktokProduct.sold_count,
+    }
+  };
+}
