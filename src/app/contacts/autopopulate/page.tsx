@@ -133,8 +133,36 @@ export default function AutoPopulatePage() {
 
   const handleAcceptAll = useCallback(async () => {
     // Mark all enriched data as accepted
-    console.log('Accepting all enriched contacts');
-    // TODO: Implement accept logic
+    setEnrichedContacts(prevContacts =>
+      prevContacts.map(contact => {
+        const updatedContact = { ...contact };
+
+        // Accept birthday prediction
+        if (updatedContact.predictedBirthday) {
+          updatedContact.birthday = {
+            ...updatedContact.birthday,
+            month: updatedContact.predictedBirthday.month,
+            day: updatedContact.predictedBirthday.day,
+          };
+          // Remove prediction metadata as it's now accepted
+          delete updatedContact.predictedBirthday;
+        }
+
+        // Update confidence to 100% as it is now user-verified
+        if (updatedContact.enrichmentMetadata) {
+          updatedContact.enrichmentMetadata = {
+            ...updatedContact.enrichmentMetadata,
+            confidence: {
+              ...updatedContact.enrichmentMetadata.confidence,
+              overall: 100,
+              birthday: 100,
+            },
+          };
+        }
+
+        return updatedContact;
+      })
+    );
   }, []);
 
   const handleRejectAll = useCallback(async () => {
