@@ -11,9 +11,9 @@
  * - UPSTASH_REDIS_REST_TOKEN
  */
 
-import { Redis } from '@upstash/redis';
 import { Ratelimit } from '@upstash/ratelimit';
 import type { RateLimitConfig, RateLimitStatus } from './types';
+import { getRedisClient } from '../redis';
 
 // Rate limit configuration
 const RATE_LIMIT_CONFIG: RateLimitConfig = {
@@ -23,8 +23,7 @@ const RATE_LIMIT_CONFIG: RateLimitConfig = {
   burstLimit: 10, // Max 10 requests in 10 seconds
 };
 
-// Redis client initialization (lazy)
-let redis: Redis | null = null;
+// Rate limiter initialization (lazy)
 let limiters: {
   burst: Ratelimit;
   minute: Ratelimit;
@@ -39,13 +38,10 @@ function getLimiters() {
   isInitialized = true;
 
   try {
-    // Check for Upstash Redis variables
-    if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-      redis = new Redis({
-        url: process.env.UPSTASH_REDIS_REST_URL,
-        token: process.env.UPSTASH_REDIS_REST_TOKEN,
-      });
+    const redis = getRedisClient();
 
+    // Check for Redis client
+    if (redis) {
       limiters = {
         burst: new Ratelimit({
           redis,
