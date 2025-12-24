@@ -16,8 +16,7 @@
  * - TIKTOK_SHOP_API_SECRET: TikTok Shop API secret
  */
 
-import type { Product, ProductSource, GiftCategory } from './schema';
-import { getRedisClient } from '../redis';
+import { type Product, type ProductSource, GiftCategory } from './schema';
 
 // ============================================================================
 // CONFIGURATION & ENVIRONMENT
@@ -522,6 +521,99 @@ export async function fetchProductsForRecommendation(
 }
 
 // ============================================================================
+// PRINTIFY API TYPES
+// ============================================================================
+
+interface PrintifyShop {
+  id: number;
+  title: string;
+  sales_channel: string;
+}
+
+interface PrintifyImage {
+  src: string;
+  variant_ids: number[];
+  position: string;
+  is_default: boolean;
+}
+
+interface PrintifyVariant {
+  id: number;
+  title: string;
+  price: number; // In cents
+  is_enabled: boolean;
+  is_default: boolean;
+  is_available: boolean;
+}
+
+interface PrintifyExternal {
+  id: string;
+  handle: string;
+  shipping_template_id: string;
+}
+
+interface PrintifyProduct {
+  id: string;
+  title: string;
+  description: string;
+  tags: string[];
+  options: any[];
+  variants: PrintifyVariant[];
+  images: PrintifyImage[];
+  created_at: string;
+  updated_at: string;
+  visible: boolean;
+  shop_id: number;
+  external?: PrintifyExternal[];
+}
+
+interface PrintifyProductListResponse {
+  current_page: number;
+  data: PrintifyProduct[];
+  last_page: number;
+  total: number;
+}
+
+// Cached shop ID to avoid repeated API calls
+let cachedPrintifyShopId: number | null = null;
+
+/**
+ * Fetch the first available Printify shop ID
+ */
+async function getPrintifyShopId(): Promise<number | null> {
+  if (cachedPrintifyShopId) return cachedPrintifyShopId;
+
+  if (!API_CONFIG.printify.enabled || !API_CONFIG.printify.apiKey) {
+    return null;
+  }
+
+  try {
+    const response = await fetch(`${API_CONFIG.printify.baseUrl}/shops.json`, {
+      headers: {
+        'Authorization': `Bearer ${API_CONFIG.printify.apiKey}`,
+      },
+    });
+
+    if (!response.ok) {
+      console.warn(`[ProductService] Failed to fetch Printify shops: ${response.status} ${response.statusText}`);
+      return null;
+    }
+
+    const shops = await response.json() as PrintifyShop[];
+    if (shops.length > 0) {
+      cachedPrintifyShopId = shops[0].id;
+      return cachedPrintifyShopId;
+    }
+
+    console.warn('[ProductService] No Printify shops found');
+    return null;
+  } catch (error) {
+    console.error('[ProductService] Error fetching Printify shops:', error);
+    return null;
+  }
+}
+
+// ============================================================================
 // SOURCE-SPECIFIC FETCHING FUNCTIONS
 // ============================================================================
 
@@ -537,23 +629,60 @@ export async function fetchProductsForRecommendation(
  * @returns Promise resolving to array of products
  */
 async function fetchPrintifyProducts(
-  _query: ProductQuery
+  query: ProductQuery
 ): Promise<Product[]> {
   if (!API_CONFIG.printify.enabled) {
     throw new Error('Printify API not configured');
   }
 
-  // TODO: Implement Printify API call
-  // const response = await fetch(`${API_CONFIG.printify.baseUrl}/shops/{shop_id}/products.json`, {
-  //   headers: {
-  //     'Authorization': `Bearer ${API_CONFIG.printify.apiKey}`,
-  //   },
-  // });
-  // const data = await response.json();
-  // return data.products.map(transformPrintifyProduct);
+  const shopId = await getPrintifyShopId();
+  if (!shopId) {
+    console.warn('[ProductService] Cannot fetch Printify products: No shop found');
+    return [];
+  }
 
-  console.info('[ProductService] Printify API integration pending implementation');
-  return [];
+  try {
+    // Build URL with query params
+    const url = new URL(`${API_CONFIG.printify.baseUrl}/shops/${shopId}/products.json`);
+
+    // API supports 'limit' (max 50) and 'page'
+    if (query.limit) {
+      url.searchParams.set('limit', Math.min(query.limit, 50).toString());
+    }
+    if (query.offset && query.limit) {
+      const page = Math.floor(query.offset / query.limit) + 1;
+      url.searchParams.set('page', page.toString());
+    }
+
+    const response = await fetch(url.toString(), {
+      headers: {
+        'Authorization': `Bearer ${API_CONFIG.printify.apiKey}`,
+      },
+    });
+
+    if (!response.ok) {
+      console.error(`[ProductService] Printify API error: ${response.status} ${response.statusText}`);
+      return [];
+    }
+
+    const data = await response.json() as PrintifyProductListResponse;
+    let products = data.data.map(transformPrintifyProduct);
+
+    // Client-side filtering for search query (API limitation)
+    if (query.searchQuery) {
+      const lowerQuery = query.searchQuery.toLowerCase();
+      products = products.filter(p =>
+        p.name.toLowerCase().includes(lowerQuery) ||
+        p.description.toLowerCase().includes(lowerQuery) ||
+        p.tags.some(t => t.toLowerCase().includes(lowerQuery))
+      );
+    }
+
+    return products;
+  } catch (error) {
+    console.error('[ProductService] Error fetching Printify products:', error);
+    return [];
+  }
 }
 
 /**
@@ -1054,18 +1183,62 @@ export function generateTikTokSignature(
 
 /**
  * Transform Printify product to Product interface
- *
- * TODO: Implement when Printify API is integrated
  */
-// function transformPrintifyProduct(printifyProduct: any): Product {
-//   return {
-//     id: printifyProduct.id,
-//     source: 'printify',
-//     name: printifyProduct.title,
-//     description: printifyProduct.description,
-//     // ... map other fields
-//   };
-// }
+function transformPrintifyProduct(printifyProduct: PrintifyProduct): Product {
+  // Determine price from variants (use lowest price)
+  const minPrice = printifyProduct.variants.reduce(
+    (min, v) => (v.is_enabled && v.price < min ? v.price : min),
+    Number.MAX_SAFE_INTEGER
+  );
+  // Price is in cents
+  const price = minPrice === Number.MAX_SAFE_INTEGER ? 0 : minPrice / 100;
+
+  // Get default image
+  const defaultImage = printifyProduct.images.find(img => img.is_default) || printifyProduct.images[0];
+
+  // Try to determine category from tags
+  // Default to personalized/handmade/other
+  let category = GiftCategory.PERSONALIZED; // Default for POD
+
+  // Simple heuristic for category mapping
+  const tagsStr = printifyProduct.tags.join(' ').toLowerCase();
+  if (tagsStr.includes('mug') || tagsStr.includes('decor') || tagsStr.includes('canvas') || tagsStr.includes('poster')) {
+    category = GiftCategory.HOME_DECOR;
+  } else if (tagsStr.includes('shirt') || tagsStr.includes('hoodie') || tagsStr.includes('clothing') || tagsStr.includes('socks')) {
+    category = GiftCategory.FASHION;
+  } else if (tagsStr.includes('tech') || tagsStr.includes('case') || tagsStr.includes('mouse pad')) {
+    category = GiftCategory.TECH;
+  }
+
+  // Product URL
+  // Use external handle if available, otherwise fallback
+  let productUrl = '#';
+  if (printifyProduct.external && printifyProduct.external.length > 0 && printifyProduct.external[0].handle) {
+    productUrl = printifyProduct.external[0].handle;
+  } else if (defaultImage) {
+    // Fallback to image if no URL (not ideal but better than empty)
+    productUrl = defaultImage.src;
+  }
+
+  return {
+    id: printifyProduct.id,
+    source: 'printify',
+    name: printifyProduct.title,
+    description: printifyProduct.description,
+    category,
+    price,
+    currency: 'USD',
+    imageUrl: defaultImage ? defaultImage.src : '',
+    productUrl,
+    vendorName: 'Printify',
+    tags: printifyProduct.tags,
+    metadata: {
+      shopId: printifyProduct.shop_id,
+      visible: printifyProduct.visible,
+      updatedAt: printifyProduct.updated_at
+    }
+  };
+}
 
 /**
  * Transform Amazon product to Product interface
