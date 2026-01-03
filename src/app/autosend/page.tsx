@@ -1,8 +1,10 @@
+import { Metadata } from 'next';
+
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
 export const revalidate = 0; // No caching
 
-export const metadata = { title: "Auto-send Cards & Gifts — Coming Soon" };
+export const metadata: Metadata = { title: "Auto-send Cards & Gifts — Coming Soon" };
 
 export default async function AutosendPage() {
   // TODO: Add dynamic server-side data fetching here when ready

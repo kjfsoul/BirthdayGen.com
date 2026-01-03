@@ -44,11 +44,11 @@ import { AudioController } from "@/components/generator/AudioController"
 import { AIMessageGenerator } from "@/components/generator/AIMessageGenerator"
 import { getAllTemplates } from "@/config/templates" // Correct import - using getAllTemplates()
 import { handleShare } from "@/lib/share"
-import { useNavigate } from 'react-router-dom'
+import { useRouter } from 'next/navigation'
 import { v4 as uuidv4 } from 'uuid'
 
 export default function CardGeneratorPage() {
-  const navigate = useNavigate()
+  const router = useRouter()
 
   // --- STATE ---
   const [activeTab, setActiveTab] = useState('template')
@@ -248,7 +248,7 @@ export default function CardGeneratorPage() {
       if (error) throw error
       console.log('Card generated:', data)
       setGeneratedCardId(data.id)
-      navigate(`/cards/${data.id}`)
+      router.push(`/cards/${data.id}`)
     } catch (error) {
       console.error('Error generating card:', error)
     } finally {

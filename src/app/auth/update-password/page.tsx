@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Lock, ArrowRight, AlertCircle, Eye, EyeOff } from "lucide-react"
-import { useNavigate, Link } from 'react-router-dom'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function UpdatePasswordPage() {
   const [password, setPassword] = useState('')
@@ -16,7 +17,7 @@ export default function UpdatePasswordPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
-  const navigate = useNavigate()
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,7 +38,7 @@ export default function UpdatePasswordPage() {
     } else {
       setSuccess("Your password has been updated successfully.")
       setTimeout(() => {
-        navigate('/auth')
+        router.push('/auth')
       }, 3000)
     }
 
@@ -118,7 +119,7 @@ export default function UpdatePasswordPage() {
             </form>
             <div className="text-center">
               <p className="text-sm text-muted-foreground">
-                <Link to="/auth" className="font-medium text-purple-600 hover:text-purple-700 transition-colors">
+                <Link href="/auth" className="font-medium text-purple-600 hover:text-purple-700 transition-colors">
                   Back to Sign in
                 </Link>
               </p>

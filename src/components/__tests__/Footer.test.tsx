@@ -25,8 +25,8 @@ describe('Footer', () => {
     // Tools section
     expect(screen.getByRole('link', { name: 'Card Generator' })).toHaveAttribute('href', '/generator')
     expect(screen.getByRole('link', { name: 'Party Planner' })).toHaveAttribute('href', '/party-planner')
-    expect(screen.getByRole('link', { name: 'Gift Guide' })).toHaveAttribute('href', '/gift-guide')
-    expect(screen.getByRole('link', { name: 'Automation' })).toHaveAttribute('href', '/automation')
+    expect(screen.getByRole('link', { name: 'Personalized Gifts' })).toHaveAttribute('href', '/gift-guide')
+    expect(screen.getByRole('link', { name: 'Send Gifts Automatically' })).toHaveAttribute('href', '/automation')
 
     // Community section
     expect(screen.getByRole('link', { name: 'Card Showcase' })).toHaveAttribute('href', '/showcase')

@@ -2,7 +2,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -21,7 +21,7 @@ import {
   EyeOff,
   AlertCircle
 } from "lucide-react"
-import { Link } from 'react-router-dom'
+import Link from 'next/link'
 
 export default function AuthPage() {
   const [mode, setMode] = useState<'signin' | 'signup'>('signup')
@@ -36,7 +36,7 @@ export default function AuthPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [checkingSession, setCheckingSession] = useState(true)
-  const navigate = useNavigate()
+  const router = useRouter()
 
   // Check if already logged in and redirect
   useEffect(() => {
@@ -44,7 +44,7 @@ export default function AuthPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
         // Already logged in, redirect to home
-        navigate('/', { replace: true })
+        router.replace('/')
       } else {
         setCheckingSession(false)
       }
@@ -55,13 +55,13 @@ export default function AuthPage() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (event === 'SIGNED_IN' && session) {
-          navigate('/', { replace: true })
+          router.replace('/')
         }
       }
     )
 
     return () => subscription.unsubscribe()
-  }, [navigate])
+  }, [router])
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -131,7 +131,7 @@ export default function AuthPage() {
       if (error) {
         setError(error.message)
       } else {
-        navigate('/')
+        router.push('/')
       }
     }
 
@@ -331,7 +331,7 @@ export default function AuthPage() {
 
               {mode === 'signin' && (
                 <div className="text-center text-sm">
-                  <Link to="/auth/forgot-password" className="font-medium text-purple-600 hover:text-purple-700 transition-colors">
+                  <Link href="/auth/forgot-password" className="font-medium text-purple-600 hover:text-purple-700 transition-colors">
                     Forgot password?
                   </Link>
                 </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { ContactList } from '@/components/contacts/ContactList';
 import { UpcomingBirthdays } from '@/components/contacts/UpcomingBirthdays';
@@ -10,7 +10,7 @@ import { ImportGoogle } from '@/components/contacts/ImportGoogle';
 import { ImportMicrosoft } from '@/components/contacts/ImportMicrosoft';
 import { ImportLinkedInCSV } from '@/components/contacts/ImportLinkedInCSV';
 import { ImportFacebook } from '@/components/contacts/ImportFacebook';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sparkles } from 'lucide-react';
 
@@ -19,7 +19,7 @@ function ContactsPageContent() {
     <main className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Contacts Dashboard</h1>
-        <Link to="/contacts/autopopulate">
+        <Link href="/contacts/autopopulate">
           <Button className="gap-2" size="lg">
             <Sparkles className="h-5 w-5" />
             Auto-Populate
@@ -67,7 +67,7 @@ function ContactsPageContent() {
 }
 
 function ContactsPageContentWithSearchParams() {
-  const [searchParams] = useSearchParams();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
 
   useEffect(() => {

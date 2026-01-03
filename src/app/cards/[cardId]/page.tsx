@@ -2,7 +2,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { AnimatedCard } from "@/components/AnimatedCard"
@@ -19,7 +19,7 @@ import {
 import { ImageEditor } from "@/components/ImageEditor"
 
 export default function CardPage() {
-    const navigate = useNavigate()
+    const router = useRouter()
     const [showTools, setShowTools] = useState(true)
     const [cardData, setCardData] = useState({
         frontMessage: 'Happy Birthday!',
@@ -49,7 +49,7 @@ export default function CardPage() {
         <div className="min-h-screen bg-gray-50 py-8 px-4">
             <div className="max-w-7xl mx-auto">
                 <div className="flex items-center justify-between mb-8">
-                    <Button variant="ghost" onClick={() => navigate(-1)}>
+                    <Button variant="ghost" onClick={() => router.back()}>
                         <ArrowLeft className="h-4 w-4 mr-2" />
                         Back
                     </Button>

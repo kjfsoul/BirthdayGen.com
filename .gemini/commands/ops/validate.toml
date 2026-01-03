@@ -1,0 +1,2 @@
+description = "Enforce Ultrathink Compliance (Lint + Types + Stubs)"
+command = ["sh", "scripts/ops/verify_strict.sh"]

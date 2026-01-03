@@ -6,7 +6,7 @@
  * recipient profiling, and recommendation logic.
  */
 
-import type { GiftingProfile, RelationshipType } from '@/lib/autopopulate/types';
+// import type { GiftingProfile, RelationshipType } from '@/lib/autopopulate/types';
 
 // ============================================================================
 // CORE GIFT RECOMMENDATION TYPES
@@ -208,8 +208,8 @@ export interface GiftRecommendationWithProducts extends GiftRecommendation {
 export interface RecipientProfile {
   // From enriched contact (auto-populate)
   name: string;
-  relationship?: RelationshipType;
-  giftingProfile?: GiftingProfile;
+  relationship?: any; // RelationshipType;
+  giftingProfile?: any; // GiftingProfile;
   archetypes?: Array<{ name: string; tags: string[]; confidence: number }>;
   interests?: string[];
 
@@ -497,6 +497,39 @@ export const OCCASION_LABELS: Record<OccasionType, string> = {
   [OccasionType.JUST_BECAUSE]: 'Just Because',
 };
 
+
+// ============================================================================
+// PRODUCT QUERY TYPES (Module C)
+// ============================================================================
+
+/**
+ * Product query parameters for fetching products
+ */
+export interface ProductQuery {
+  categories?: GiftCategory[];
+  minPrice?: number;
+  maxPrice?: number;
+  tags?: string[];
+  sourceFilter?: ProductSource[];
+  limit?: number;
+  offset?: number;
+  searchQuery?: string;
+  sortBy?: 'price_asc' | 'price_desc' | 'rating' | 'popularity';
+}
+
+/**
+ * Product fetch result with metadata
+ */
+export interface ProductFetchResult {
+  products: Product[];
+  totalCount: number;
+  sources: Array<{
+    source: ProductSource;
+    count: number;
+    error?: string;
+  }>;
+  cached: boolean;
+}
 
 // ============================================================================
 // PRODUCT HELPER TYPES (Module C)

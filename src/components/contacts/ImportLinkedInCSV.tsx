@@ -137,7 +137,7 @@ export function ImportLinkedInCSV() {
                       <SelectItem value="company">Company</SelectItem>
                       <SelectItem value="title">Title</SelectItem>
                       <SelectItem value="url">URL</SelectItem>
-                      <SelectItem value="">Ignore</SelectItem>
+                      <SelectItem value="ignore">Ignore</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

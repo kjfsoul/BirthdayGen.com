@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 
 interface Contact {
   id: string;
@@ -209,7 +209,7 @@ export function ContactList() {
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span>{contact.fullName}</span>
-                <Link to={`/gifts?contactId=${contact.id}`}>
+                <Link href={`/gifts?contactId=${contact.id}`}>
                   <Button variant="outline" size="sm">Gift Ideas</Button>
                 </Link>
               </CardTitle>

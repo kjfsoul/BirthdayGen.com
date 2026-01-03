@@ -1,0 +1,2 @@
+description = "Generate the mandatory Violation Report structure"
+command = ["cat", "docs/audit/VIOLATION_REPORT_TEMPLATE.md"]

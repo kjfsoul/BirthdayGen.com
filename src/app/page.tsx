@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, Suspense } from 'react'
-import { Link } from 'react-router-dom'
+import Link from 'next/link'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -102,13 +102,13 @@ export default function Home() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Button size="lg" className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white text-lg px-8 py-4" asChild>
-              <Link to="/auth">
+              <Link href="/auth">
                 <Wand2 className="h-5 w-5 mr-2" />
                 Sign up free
               </Link>
             </Button>
             <Button size="lg" variant="outline" className="text-lg px-8 py-4 border-purple-300 text-purple-600 hover:bg-purple-50" asChild>
-              <Link to="/blog?tag=holiday">
+              <Link href="/blog?tag=holiday">
                 <Search className="h-5 w-5 mr-2" />
                 Explore ideas
               </Link>
@@ -175,7 +175,7 @@ export default function Home() {
                         <Input type="file" accept=".vcf" />
                       </div>
                       <div className="text-center">
-                        <Link to="/help/carddav" className="text-purple-600 hover:underline">
+                        <Link href="/help/carddav" className="text-purple-600 hover:underline">
                           Use CardDAV (advanced)
                         </Link>
                       </div>
@@ -251,7 +251,7 @@ export default function Home() {
 
           <div className="grid md:grid-cols-3 gap-8">
             {tools.map((tool) => (
-              <Link key={tool.href} to={tool.href}>
+              <Link key={tool.href} href={tool.href}>
                 <Card className="h-full hover:shadow-xl transition-all duration-300 cursor-pointer group border-0 shadow-lg">
                   <CardHeader>
                     <div className={`w-16 h-16 rounded-xl bg-gradient-to-r ${tool.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
@@ -292,7 +292,7 @@ export default function Home() {
                 <Badge className="mb-3">Holiday Tips</Badge>
                 <h3 className="text-xl font-semibold mb-2">10 Holiday Birthday Ideas</h3>
                 <p className="text-gray-600 mb-4">Make this holiday season unforgettable with these creative birthday celebration ideas.</p>
-                <Link to="/blog/holiday-birthday-ideas" className="text-purple-600 font-medium hover:underline">
+                <Link href="/blog/holiday-birthday-ideas" className="text-purple-600 font-medium hover:underline">
                   Read more →
                 </Link>
               </CardContent>
@@ -303,7 +303,7 @@ export default function Home() {
                 <Badge className="mb-3">Party Planning</Badge>
                 <h3 className="text-xl font-semibold mb-2">Winter Wonderland Parties</h3>
                 <p className="text-gray-600 mb-4">Transform your home into a magical winter wonderland for the perfect birthday party.</p>
-                <Link to="/blog/winter-wonderland-parties" className="text-purple-600 font-medium hover:underline">
+                <Link href="/blog/winter-wonderland-parties" className="text-purple-600 font-medium hover:underline">
                   Read more →
                 </Link>
               </CardContent>
@@ -314,7 +314,7 @@ export default function Home() {
                 <Badge className="mb-3">Gift Ideas</Badge>
                 <h3 className="text-xl font-semibold mb-2">Thoughtful Holiday Gifts</h3>
                 <p className="text-gray-600 mb-4">Discover meaningful gifts that show you care this holiday season.</p>
-                <Link to="/blog/thoughtful-holiday-gifts" className="text-purple-600 font-medium hover:underline">
+                <Link href="/blog/thoughtful-holiday-gifts" className="text-purple-600 font-medium hover:underline">
                   Read more →
                 </Link>
               </CardContent>

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 
 interface Contact {
   id: string;
@@ -135,7 +135,7 @@ export function UpcomingBirthdays() {
                     {nextBirthday.toLocaleDateString()} ({daysUntil} days)
                   </p>
                 </div>
-                <Link to={`/gifts?contactId=${contact.id}`}>
+                <Link href={`/gifts?contactId=${contact.id}`}>
                   <Button variant="outline" size="sm">
                     Personalize Gift
                   </Button>

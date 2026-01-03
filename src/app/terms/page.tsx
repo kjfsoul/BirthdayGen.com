@@ -1,4 +1,6 @@
-export const metadata = { title: "Terms of Service — BirthdayGen" };
+import { Metadata } from 'next';
+
+export const metadata: Metadata = { title: "Terms of Service — BirthdayGen" };
 
 export default function TermsPage() {
   return (

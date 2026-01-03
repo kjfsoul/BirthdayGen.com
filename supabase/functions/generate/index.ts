@@ -56,9 +56,10 @@ Write a short, personalized birthday message. Do not include explanations.
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
 
-    } catch (error) {
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'An error occurred'
         return new Response(
-            JSON.stringify({ error: error.message }),
+            JSON.stringify({ error: message }),
             { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
     }

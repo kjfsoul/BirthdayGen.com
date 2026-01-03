@@ -1,10 +1,10 @@
 'use client'
 
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 
 function ErrorContent() {
-  const [searchParams] = useSearchParams()
+  const searchParams = useSearchParams()
   const error = searchParams.get('error') || null
   const errorDescription = searchParams.get('error_description') || null
 

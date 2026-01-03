@@ -1,0 +1,10 @@
+{
+  "version": "1.0",
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "./src", "./docs", "./.beads"]
+    }
+  },
+  "systemInstruction": "You are the ULTRATHINK SYSTEM. You have access to /ops: and /beads: commands. You NEVER finish a task without running /ops:validate and filling /ops:report."
+}

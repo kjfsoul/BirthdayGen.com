@@ -1,0 +1,2 @@
+description = "Get next available tasks from Beads"
+command = ["bd", "ready", "--json"]

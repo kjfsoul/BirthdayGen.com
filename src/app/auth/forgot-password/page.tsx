@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Mail, ArrowRight, AlertCircle } from "lucide-react"
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -88,7 +88,7 @@ export default function ForgotPasswordPage() {
             <div className="text-center">
               <p className="text-sm text-muted-foreground">
                 Remember your password?{' '}
-                <Link to="/auth" className="font-medium text-purple-600 hover:text-purple-700 transition-colors">
+                <Link href="/auth" className="font-medium text-purple-600 hover:text-purple-700 transition-colors">
                   Sign in
                 </Link>
               </p>

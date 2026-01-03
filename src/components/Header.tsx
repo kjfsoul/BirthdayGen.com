@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Menu, Search, User as UserIcon, Heart, LogOut } from "lucide-react"
@@ -16,9 +17,8 @@ export function Header() {
   const [isOpen, setIsOpen] = useState(false)
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [loading, setLoading] = useState(true)
-  const location = useLocation()
-  const pathname = location.pathname
-  const navigate = useNavigate()
+  const pathname = usePathname()
+  const router = useRouter()
   const { toast } = useToast()
 
   useEffect(() => {
@@ -50,13 +50,13 @@ export function Header() {
         setUser(session?.user ?? null)
         setLoading(false)
         if (event === 'SIGNED_OUT') {
-          navigate(0) // Refresh page
+          router.refresh() // Refresh page
         }
       }
     )
 
     return () => subscription.unsubscribe()
-  }, [navigate])
+  }, [router])
 
 
 
@@ -73,7 +73,7 @@ export function Header() {
         title: "Signed out",
         description: "You have been signed out successfully.",
       })
-      navigate('/')
+      router.push('/')
     }
   }
 
@@ -92,7 +92,7 @@ export function Header() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-2">
+            <Link href="/" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-purple-600 rounded-lg flex items-center justify-center">
                 <Heart className="h-5 w-5 text-white" />
               </div>
@@ -103,7 +103,7 @@ export function Header() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <Link
-              to="/generator"
+              href="/generator"
               className={`text-sm font-medium transition-colors ${isActive('/generator')
                 ? 'text-purple-600'
                 : 'text-gray-700 hover:text-purple-600'
@@ -112,7 +112,7 @@ export function Header() {
               Card Maker
             </Link>
             <Link
-              to="/party-planner"
+              href="/party-planner"
               className={`text-sm font-medium transition-colors ${isActive('/party-planner')
                 ? 'text-purple-600'
                 : 'text-gray-700 hover:text-purple-600'
@@ -121,7 +121,7 @@ export function Header() {
               Party Planner
             </Link>
             <Link
-              to="/gifts"
+              href="/gifts"
               className={`text-sm font-medium transition-colors ${isActive('/gifts')
                 ? 'text-purple-600'
                 : 'text-gray-700 hover:text-purple-600'
@@ -130,7 +130,7 @@ export function Header() {
               Gift Guide
             </Link>
             <Link
-              to="/blog"
+              href="/blog"
               className={`text-sm font-medium transition-colors ${isActive('/blog')
                 ? 'text-purple-600'
                 : 'text-gray-700 hover:text-purple-600'
@@ -150,7 +150,7 @@ export function Header() {
               <div className="w-8 h-8 animate-spin rounded-full border-2 border-purple-600 border-t-transparent" />
             ) : user ? (
               <div className="flex items-center space-x-2">
-                <Link to="/contacts">
+                <Link href="/contacts">
                   <Button variant="ghost" size="sm">
                     <UserIcon className="h-4 w-4 mr-2" />
                     Dashboard
@@ -164,13 +164,13 @@ export function Header() {
             ) : (
               <>
                 <Button variant="ghost" size="sm" asChild>
-                  <Link to="/auth">
+                  <Link href="/auth">
                     <UserIcon className="h-4 w-4 mr-2" />
                     Sign in
                   </Link>
                 </Button>
                 <Button size="sm" className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white" asChild>
-                  <Link to="/auth">
+                  <Link href="/auth">
                     Sign up free
                   </Link>
                 </Button>

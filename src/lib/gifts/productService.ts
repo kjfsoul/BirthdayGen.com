@@ -1,149 +1,11 @@
-/* eslint-disable no-console */
-/**
- * Product Service - External API Integration Layer
- * Phase 4 - Module C (Real Product Data Structure)
- *
- * Production-ready product data layer with scaffolding for external API integrations.
- * Supports Printify, Amazon, Etsy, and TikTok Shop APIs.
- *
- * REQUIRED ENVIRONMENT VARIABLES:
- * - PRINTIFY_API_KEY: Printify API authentication key
- * - AMAZON_API_KEY: Amazon Product Advertising API key
- * - AMAZON_API_SECRET: Amazon Product Advertising API secret
- * - AMAZON_PARTNER_TAG: Amazon Associates partner tag for affiliate links
- * - ETSY_API_KEY: Etsy API key
- * - TIKTOK_SHOP_API_KEY: TikTok Shop API key
- * - TIKTOK_SHOP_API_SECRET: TikTok Shop API secret
- */
-
-import { type Product, type ProductSource, GiftCategory } from './schema';
-
-// ============================================================================
-// CONFIGURATION & ENVIRONMENT
-// ============================================================================
-
-/**
- * API configuration with environment variable checks
- */
-const API_CONFIG = {
-  printify: {
-    enabled: !!process.env.PRINTIFY_API_KEY,
-    apiKey: process.env.PRINTIFY_API_KEY,
-    baseUrl: 'https://api.printify.com/v1',
-  },
-  amazon: {
-    enabled: !!(
-      process.env.AMAZON_API_KEY &&
-      process.env.AMAZON_API_SECRET &&
-      process.env.AMAZON_PARTNER_TAG
-    ),
-    apiKey: process.env.AMAZON_API_KEY,
-    apiSecret: process.env.AMAZON_API_SECRET,
-    partnerTag: process.env.AMAZON_PARTNER_TAG,
-    baseUrl: 'https://webservices.amazon.com/paapi5',
-  },
-  etsy: {
-    enabled: !!process.env.ETSY_API_KEY,
-    apiKey: process.env.ETSY_API_KEY,
-    baseUrl: 'https://openapi.etsy.com/v3',
-  },
-  tiktokShop: {
-    enabled: !!(
-      process.env.TIKTOK_SHOP_API_KEY &&
-      process.env.TIKTOK_SHOP_API_SECRET
-    ),
-    apiKey: process.env.TIKTOK_SHOP_API_KEY,
-    apiSecret: process.env.TIKTOK_SHOP_API_SECRET,
-    baseUrl: 'https://open-api.tiktokglobalshop.com',
-  },
-};
-
-/**
- * Log API configuration status on module load
- */
-function logApiStatus() {
-  const statuses = Object.entries(API_CONFIG).map(([source, config]) => ({
-    source,
-    enabled: config.enabled,
-  }));
-
-  const enabledCount = statuses.filter((s) => s.enabled).length;
-  const totalCount = statuses.length;
-
-  if (enabledCount === 0) {
-    console.warn(
-      '⚠️  [ProductService] No external product APIs configured. All product fetches will return empty results.'
-    );
-    console.warn(
-      '   Configure at least one API by setting the appropriate environment variables.'
-    );
-  } else {
-    console.info(
-      `✅ [ProductService] ${enabledCount}/${totalCount} product sources configured`
-    );
-    statuses.forEach(({ source, enabled }) => {
-      if (enabled) {
-        console.info(`   ✓ ${source}: enabled`);
-      } else {
-        console.info(`   ✗ ${source}: disabled (missing API keys)`);
-      }
-    });
-  }
-}
-
-// Log status on module initialization
-logApiStatus();
-
-// ============================================================================
-// QUERY TYPES
-// ============================================================================
-
-/**
- * Product query parameters for searching and filtering
- */
-export interface ProductQuery {
-  // Filter by categories
-  categories?: GiftCategory[];
-
-  // Price range filtering
-  maxPrice?: number;
-  minPrice?: number;
-
-  // Tag-based search
-  tags?: string[];
-
-  // Source filtering (which APIs to query)
-  sourceFilter?: ProductSource[];
-
-  // Pagination & limits
-  limit?: number;
-  offset?: number;
-
-  // Search keywords
-  searchQuery?: string;
-
-  // Sorting
-  sortBy?: 'price_asc' | 'price_desc' | 'rating' | 'popularity';
-}
-
-/**
- * Product fetch result with metadata
- */
-export interface ProductFetchResult {
-  products: Product[];
-  totalCount: number;
-  sources: {
-    source: ProductSource;
-    count: number;
-    error?: string;
-  }[];
-  cached: boolean;
-}
+import * as crypto from 'crypto';
+import { getRedisClient } from '../../lib/redis';
+import { Product, ProductSource, GiftCategory, ProductQuery, ProductFetchResult } from './schema';
+import { API_CONFIG } from './config';
 
 // ============================================================================
 // CACHING STATE
 // ============================================================================
-
 interface CacheEntry<T> {
   data: T;
   expiry: number;
@@ -169,7 +31,7 @@ const REDIS_QUERY_PREFIX = 'query:';
  * @returns Promise resolving to product fetch result
  *
  * @example
- * ```typescript
+ * ```
  * const result = await fetchProducts({
  *   categories: [GiftCategory.TECH],
  *   maxPrice: 100,
@@ -234,7 +96,6 @@ export async function fetchProducts(
     configuredSources.map(async (source) => {
       try {
         let products: Product[] = [];
-
         switch (source) {
           case 'printify':
             products = await fetchPrintifyProducts(query);
@@ -251,7 +112,6 @@ export async function fetchProducts(
           default:
             console.warn(`[ProductService] Unknown source: ${source}`);
         }
-
         return {
           source,
           products,
@@ -275,7 +135,6 @@ export async function fetchProducts(
   // Aggregate results from all sources
   let allProducts: Product[] = [];
   const sourceMetadata: ProductFetchResult['sources'] = [];
-
   sourceResults.forEach((result) => {
     if (result.status === 'fulfilled') {
       allProducts = allProducts.concat(result.value.products);
@@ -311,7 +170,6 @@ export async function fetchProducts(
 
   // Apply pagination
   const paginatedProducts = filteredProducts.slice(offset, offset + limit);
-
   const result: ProductFetchResult = {
     products: paginatedProducts,
     totalCount: filteredProducts.length,
@@ -321,7 +179,6 @@ export async function fetchProducts(
 
   // Cache the results
   await cacheProducts(cacheKey, result);
-
   return result;
 }
 
@@ -333,7 +190,7 @@ export async function fetchProducts(
  * @returns Promise resolving to array of products
  *
  * @example
- * ```typescript
+ * ```
  * const products = await searchProductsByCategory(
  *   GiftCategory.TECH,
  *   100
@@ -348,11 +205,9 @@ export async function searchProductsByCategory(
     categories: [category],
     limit: 50,
   };
-
   if (budget !== undefined) {
     query.maxPrice = budget;
   }
-
   const result = await fetchProducts(query);
   return result.products;
 }
@@ -365,7 +220,7 @@ export async function searchProductsByCategory(
  * @returns Promise resolving to product or null if not found
  *
  * @example
- * ```typescript
+ * ```
  * const product = await getProductById('12345', 'amazon');
  * ```
  */
@@ -380,13 +235,11 @@ export async function getProductById(
   // Check if source is configured
   const sourceKey =
     source === 'tiktok_shop' ? 'tiktokShop' : source;
-
   if (source === 'internal') {
     // TODO: Implement internal product lookup from database
     console.warn('[ProductService] Internal product lookup not yet implemented');
     return null;
   }
-
   if (!API_CONFIG[sourceKey as keyof typeof API_CONFIG]?.enabled) {
     console.warn(
       `[ProductService] Cannot fetch product ${id}: ${source} API not configured`
@@ -396,7 +249,6 @@ export async function getProductById(
 
   try {
     let product: Product | null = null;
-
     switch (source) {
       case 'printify':
         product = await getPrintifyProductById(id);
@@ -413,7 +265,6 @@ export async function getProductById(
       default:
         console.warn(`[ProductService] Unknown source: ${source}`);
     }
-
     if (product) {
       // Cache the product for future lookups
       await cacheProduct(product);
@@ -426,16 +277,13 @@ export async function getProductById(
       limit: 1,
       sourceFilter: [source],
     });
-
     const fallbackProduct = result.products.find(
       (p) => p.id === id && p.source === source
     );
-
     if (fallbackProduct) {
       await cacheProduct(fallbackProduct);
       return fallbackProduct;
     }
-
     return null;
   } catch (error) {
     console.error(
@@ -448,276 +296,9 @@ export async function getProductById(
   }
 }
 
-/**
- * Fetch a specific product from Printify by ID
- *
- * @param id - Product ID
- * @returns Promise resolving to product or null
- */
-async function getPrintifyProductById(id: string): Promise<Product | null> {
-  if (!API_CONFIG.printify.enabled || !API_CONFIG.printify.apiKey) {
-    // Only warn if enabled but missing key (though enabled checks key presence)
-    if (API_CONFIG.printify.enabled) console.warn('[ProductService] Printify API key missing');
-    return null;
-  }
-
-  try {
-    // Printify API: GET /shops/{shop_id}/products/{product_id}.json
-    const shopId = process.env.PRINTIFY_SHOP_ID;
-    if (!shopId) {
-       // Cannot fetch without shop ID
-       return null;
-    }
-
-    const response = await fetch(`${API_CONFIG.printify.baseUrl}/shops/${shopId}/products/${id}.json`, {
-      headers: {
-        'Authorization': `Bearer ${API_CONFIG.printify.apiKey}`,
-      },
-    });
-
-    if (!response.ok) {
-        // If 404, product not found
-        if (response.status === 404) return null;
-        throw new Error(`Printify API error: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return transformPrintifyProduct(data);
-  } catch (error) {
-    console.error(`[ProductService] Error fetching Printify product ${id}:`, error);
-    return null;
-  }
-}
-
-/**
- * Fetch a specific product from Amazon by ID
- *
- * @param id - Product ID
- * @returns Promise resolving to product or null
- */
-async function getAmazonProductById(id: string): Promise<Product | null> {
-  if (!API_CONFIG.amazon.enabled) {
-    return null;
-  }
-
-  try {
-    // Amazon PAAPI: GetItems
-    // Note: Amazon PAAPI requires complex signing (AWS Signature V4).
-    // Without the `amazon-paapi` package or a similar helper, we cannot
-    // easily construct the fetch call here in plain JS/TS without implementing
-    // the full signing algorithm.
-
-    // For now, we will assume a helper `fetchAmazonItem` exists or we'd need to install a library.
-    // Since we can't install libraries freely, we will leave this as a structured stub
-    // but without the "pending" log to reduce noise, effectively disabling it
-    // until the signing logic is available.
-
-    /*
-    const request = {
-      ItemIds: [id],
-      Resources: [
-        'Images.Primary.Large',
-        'ItemInfo.Title',
-        'ItemInfo.Features',
-        'ItemInfo.ProductInfo',
-        'Offers.Listings.Price'
-      ],
-      PartnerTag: API_CONFIG.amazon.partnerTag,
-      PartnerType: 'Associates',
-      Marketplace: 'www.amazon.com'
-    };
-    */
-
-    // return transformAmazonProduct(item);
-
-    return null;
-  } catch (error) {
-    console.error(`[ProductService] Error fetching Amazon product ${id}:`, error);
-    return null;
-  }
-}
-
-/**
- * Fetch a specific product from Etsy by ID
- *
- * @param id - Product ID
- * @returns Promise resolving to product or null
- */
-async function getEtsyProductById(id: string): Promise<Product | null> {
-  if (!API_CONFIG.etsy.enabled || !API_CONFIG.etsy.apiKey) {
-    return null;
-  }
-
-  try {
-    // Etsy API: GET /application/listings/{listing_id}
-    const response = await fetch(
-      `${API_CONFIG.etsy.baseUrl}/application/listings/${id}`,
-      {
-        headers: {
-          'x-api-key': API_CONFIG.etsy.apiKey,
-        },
-      }
-    );
-
-    if (!response.ok) {
-       if (response.status === 404) return null;
-       throw new Error(`Etsy API error: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return transformEtsyProduct(data);
-  } catch (error) {
-    console.error(`[ProductService] Error fetching Etsy product ${id}:`, error);
-    return null;
-  }
-}
-
-/**
- * Fetch a specific product from TikTok Shop by ID
- *
- * @param id - Product ID
- * @returns Promise resolving to product or null
- */
-async function getTikTokShopProductById(id: string): Promise<Product | null> {
-  if (!API_CONFIG.tiktokShop.enabled) {
-    return null;
-  }
-
-  try {
-    // TikTok Shop API
-    // Need to generate signature
-    const timestamp = Math.floor(Date.now() / 1000);
-    const path = '/api/products/details';
-    // const signature = generateTikTokSignature(...)
-
-    // Note: Since we lack the signature generation logic in this context,
-    // we cannot fully implement this without the helper.
-    // However, we construct the request as best as possible.
-
-    const url = new URL(`${API_CONFIG.tiktokShop.baseUrl}${path}`);
-    url.searchParams.append('product_id', id);
-    url.searchParams.append('timestamp', timestamp.toString());
-
-    // Fallback if signature helper is missing: abort
-    // if (!generateTikTokSignature) return null;
-
-    const response = await fetch(url.toString(), {
-      headers: {
-         'x-tts-access-token': API_CONFIG.tiktokShop.apiKey!,
-      }
-    });
-
-    if (!response.ok) return null;
-    const data = await response.json();
-    return transformTikTokProduct(data);
-  } catch (error) {
-    console.error(`[ProductService] Error fetching TikTok product ${id}:`, error);
-    return null;
-  }
-}
-
-/**
- * Fetch real products for a GPT-4o gift recommendation (Module D)
- *
- * Integrates ProductService with AI recommendations by:
- * - Extracting category and tags from GPT recommendation
- * - Querying configured product APIs (Amazon, Etsy, etc.)
- * - Applying budget constraints
- * - Returning matching products or empty array if APIs not configured
- *
- * This function gracefully handles API errors and missing configurations,
- * ensuring the gift recommendation API never crashes due to product service issues.
- *
- * @param recommendation - GPT-4o generated gift recommendation
- * @param budget - Optional budget constraints (overrides recommendation price)
- * @returns Promise resolving to array of matching products (empty if APIs not configured)
- *
- * @example
- * ```typescript
- * // After GPT-4o generates recommendations
- * const products = await fetchProductsForRecommendation(
- *   recommendation,
- *   { min: 20, max: 50 }
- * );
- *
- * if (products.length > 0) {
- *   console.log('Found real products matching AI recommendation');
- * }
- * ```
- */
-export async function fetchProductsForRecommendation(
-  recommendation: import('./schema').GiftRecommendation,
-  budget?: { min: number; max: number }
-): Promise<Product[]> {
-  try {
-    // Extract category from recommendation
-    const category = recommendation.product.category;
-
-    // Extract tags for more refined search
-    const tags = recommendation.product.tags || [];
-
-    // Determine budget constraints
-    // Use provided budget, or fall back to recommendation's estimated price
-    let minPrice: number | undefined;
-    let maxPrice: number | undefined;
-
-    if (budget) {
-      minPrice = budget.min;
-      maxPrice = budget.max;
-    } else if (recommendation.product.estimatedPrice) {
-      // Allow ±20% range around estimated price
-      const estimatedPrice = recommendation.product.estimatedPrice;
-      minPrice = Math.max(0, estimatedPrice * 0.8);
-      maxPrice = estimatedPrice * 1.2;
-    }
-
-    // Build query for ProductService
-    const query: ProductQuery = {
-      categories: [category],
-      tags: tags.length > 0 ? tags : undefined,
-      minPrice,
-      maxPrice,
-      limit: 10, // Return top 10 matching products
-      sortBy: 'popularity',
-    };
-
-    // Fetch products from configured APIs
-    const result = await fetchProducts(query);
-
-    // Log result for debugging
-    if (result.products.length > 0) {
-      console.info(
-        `[ProductService] Found ${result.products.length} products for recommendation "${recommendation.product.name}"`
-      );
-    } else {
-      const configuredSources = result.sources.filter(s => !s.error || s.error !== 'API not configured');
-      if (configuredSources.length === 0) {
-        console.info(
-          `[ProductService] No products found for "${recommendation.product.name}" - APIs not configured`
-        );
-      } else {
-        console.info(
-          `[ProductService] No products found for "${recommendation.product.name}" - no matches in configured APIs`
-        );
-      }
-    }
-
-    return result.products;
-
-  } catch (error) {
-    // Graceful error handling - never throw, just return empty array
-    console.error(
-      `[ProductService] Error fetching products for recommendation:`,
-      error
-    );
-    return [];
-  }
-}
-
 // ============================================================================
 // PRINTIFY API TYPES
 // ============================================================================
-
 interface PrintifyShop {
   id: number;
   title: string;
@@ -776,29 +357,24 @@ let cachedPrintifyShopId: number | null = null;
  */
 async function getPrintifyShopId(): Promise<number | null> {
   if (cachedPrintifyShopId) return cachedPrintifyShopId;
-
   if (!API_CONFIG.printify.enabled || !API_CONFIG.printify.apiKey) {
     return null;
   }
-
   try {
     const response = await fetch(`${API_CONFIG.printify.baseUrl}/shops.json`, {
       headers: {
         'Authorization': `Bearer ${API_CONFIG.printify.apiKey}`,
       },
     });
-
     if (!response.ok) {
       console.warn(`[ProductService] Failed to fetch Printify shops: ${response.status} ${response.statusText}`);
       return null;
     }
-
     const shops = await response.json() as PrintifyShop[];
     if (shops.length > 0) {
       cachedPrintifyShopId = shops[0].id;
       return cachedPrintifyShopId;
     }
-
     console.warn('[ProductService] No Printify shops found');
     return null;
   } catch (error) {
@@ -828,17 +404,14 @@ async function fetchPrintifyProducts(
   if (!API_CONFIG.printify.enabled) {
     throw new Error('Printify API not configured');
   }
-
   const shopId = await getPrintifyShopId();
   if (!shopId) {
     console.warn('[ProductService] Cannot fetch Printify products: No shop found');
     return [];
   }
-
   try {
     // Build URL with query params
     const url = new URL(`${API_CONFIG.printify.baseUrl}/shops/${shopId}/products.json`);
-
     // API supports 'limit' (max 50) and 'page'
     if (query.limit) {
       url.searchParams.set('limit', Math.min(query.limit, 50).toString());
@@ -847,21 +420,17 @@ async function fetchPrintifyProducts(
       const page = Math.floor(query.offset / query.limit) + 1;
       url.searchParams.set('page', page.toString());
     }
-
     const response = await fetch(url.toString(), {
       headers: {
         'Authorization': `Bearer ${API_CONFIG.printify.apiKey}`,
       },
     });
-
     if (!response.ok) {
       console.error(`[ProductService] Printify API error: ${response.status} ${response.statusText}`);
       return [];
     }
-
     const data = await response.json() as PrintifyProductListResponse;
     let products = data.data.map(transformPrintifyProduct);
-
     // Client-side filtering for search query (API limitation)
     if (query.searchQuery) {
       const lowerQuery = query.searchQuery.toLowerCase();
@@ -871,7 +440,6 @@ async function fetchPrintifyProducts(
         p.tags.some(t => t.toLowerCase().includes(lowerQuery))
       );
     }
-
     return products;
   } catch (error) {
     console.error('[ProductService] Error fetching Printify products:', error);
@@ -896,7 +464,6 @@ async function fetchAmazonProducts(
   if (!API_CONFIG.amazon.enabled) {
     throw new Error('Amazon API not configured');
   }
-
   // TODO: Implement Amazon PAAPI call
   // - Use AWS SDK or implement signature authentication
   // - Map query.categories to Amazon browse nodes
@@ -908,7 +475,6 @@ async function fetchAmazonProducts(
   // };
   // const response = await amazonClient.searchItems(request);
   // return response.SearchResult.Items.map(transformAmazonProduct);
-
   console.info('[ProductService] Amazon API integration pending implementation');
   return [];
 }
@@ -930,7 +496,6 @@ async function fetchEtsyProducts(
   if (!API_CONFIG.etsy.enabled) {
     throw new Error('Etsy API not configured');
   }
-
   // TODO: Implement Etsy API call
   // const response = await fetch(
   //   `${API_CONFIG.etsy.baseUrl}/application/listings/active`,
@@ -942,7 +507,6 @@ async function fetchEtsyProducts(
   // );
   // const data = await response.json();
   // return data.results.map(transformEtsyProduct);
-
   console.info('[ProductService] Etsy API integration pending implementation');
   return [];
 }
@@ -964,14 +528,12 @@ async function fetchTikTokShopProducts(
   if (!API_CONFIG.tiktokShop.enabled) {
     throw new Error('TikTok Shop API not configured');
   }
-
   // Use a placeholder path for Product Search
   // Note: This endpoint path should be verified with TikTok Shop Partner Center documentation
   // The official documentation suggests different paths for different regions/versions.
   // We use a common pattern for V202309 API.
   const path = '/product/202309/products/search';
   const url = `${API_CONFIG.tiktokShop.baseUrl}${path}`;
-
   const appKey = API_CONFIG.tiktokShop.apiKey!;
   const appSecret = API_CONFIG.tiktokShop.apiSecret!;
 
@@ -991,7 +553,6 @@ async function fetchTikTokShopProducts(
     // Assuming we are using a public or partner-level search if available.
     // If not, this call might fail with "Access Denied" or similar until an access token is provided.
   };
-
   const { signature, timestamp } = generateTikTokSignature(appSecret, path, params, requestBody);
 
   // Construct URL with query params
@@ -1008,22 +569,17 @@ async function fetchTikTokShopProducts(
       },
       body: JSON.stringify(requestBody),
     });
-
     if (!response.ok) {
       throw new Error(`TikTok Shop API error: ${response.status} ${response.statusText}`);
     }
-
     const data = await response.json();
-
     if (data.code !== 0) { // TikTok API usually returns code 0 for success
-       throw new Error(`TikTok Shop API error code ${data.code}: ${data.message}`);
+      throw new Error(`TikTok Shop API error code ${data.code}: ${data.message}`);
     }
-
     // Map response to Product interface
     // Assuming data.data.products is the array
     const products = (data.data?.products || []).map((p: any) => transformTikTokProduct(p));
     return products;
-
   } catch (error) {
     console.error('[ProductService] TikTok Shop API call failed:', error);
     // Return empty array to avoid breaking the aggregated fetch
@@ -1045,7 +601,6 @@ export function buildAffiliateUrl(product: Product): string {
   if (product.affiliateUrl) {
     return product.affiliateUrl;
   }
-
   // TODO: Implement source-specific affiliate URL generation
   switch (product.source) {
     case 'amazon':
@@ -1056,23 +611,18 @@ export function buildAffiliateUrl(product: Product): string {
         return url.toString();
       }
       break;
-
     case 'etsy':
       // TODO: Add Etsy affiliate parameters
       break;
-
     case 'printify':
       // Printify typically doesn't use affiliate links
       break;
-
     case 'tiktok_shop':
       // TODO: Add TikTok Shop affiliate parameters
       break;
-
     default:
       break;
   }
-
   return product.productUrl;
 }
 
@@ -1112,7 +662,6 @@ export function filterByTags(
   tags: string[]
 ): Product[] {
   const lowercaseTags = tags.map((t) => t.toLowerCase());
-
   return products.filter((product) => {
     const productTags = product.tags.map((t) => t.toLowerCase());
     return lowercaseTags.some((tag) => productTags.includes(tag));
@@ -1131,16 +680,13 @@ export function sortProducts(
   sortBy: ProductQuery['sortBy']
 ): Product[] {
   const sorted = [...products];
-
   switch (sortBy) {
     case 'price_asc':
       sorted.sort((a, b) => a.price - b.price);
       break;
-
     case 'price_desc':
       sorted.sort((a, b) => b.price - a.price);
       break;
-
     case 'rating':
       sorted.sort((a, b) => {
         const ratingA = a.metadata?.rating || 0;
@@ -1148,7 +694,6 @@ export function sortProducts(
         return ratingB - ratingA;
       });
       break;
-
     case 'popularity':
       // Sort by review count as proxy for popularity
       sorted.sort((a, b) => {
@@ -1157,12 +702,10 @@ export function sortProducts(
         return countB - countA;
       });
       break;
-
     default:
       // No sorting
       break;
   }
-
   return sorted;
 }
 
@@ -1182,13 +725,12 @@ function generateProductCacheKey(id: string, source: ProductSource): string {
  */
 export function generateCacheKey(query: ProductQuery): string {
   // Sort keys to ensure consistent order for same query
-  const sortedQuery = Object.keys(query)
+  const sortedQuery: Record<string, unknown> = {};
+  Object.keys(query)
     .sort()
-    .reduce((acc, key) => {
-      acc[key as keyof ProductQuery] = query[key as keyof ProductQuery] as any;
-      return acc;
-    }, {} as Partial<ProductQuery>);
-
+    .forEach((key) => {
+      sortedQuery[key] = query[key as keyof ProductQuery];
+    });
   return JSON.stringify(sortedQuery);
 }
 
@@ -1200,7 +742,6 @@ export async function getCachedProduct(
   source: ProductSource
 ): Promise<Product | null> {
   const key = generateProductCacheKey(id, source);
-
   // Try Redis first
   const redis = getRedisClient();
   if (redis) {
@@ -1212,18 +753,14 @@ export async function getCachedProduct(
       console.warn('[ProductService] Redis get error:', error);
     }
   }
-
   // Fallback to in-memory
   const entry = productCache.get(key);
-
   if (!entry) return null;
-
   // Check expiry
   if (Date.now() > entry.expiry) {
     productCache.delete(key);
     return null;
   }
-
   return entry.data;
 }
 
@@ -1232,7 +769,6 @@ export async function getCachedProduct(
  */
 export async function cacheProduct(product: Product): Promise<void> {
   const key = generateProductCacheKey(product.id, product.source);
-
   // Try Redis first
   const redis = getRedisClient();
   if (redis) {
@@ -1244,7 +780,6 @@ export async function cacheProduct(product: Product): Promise<void> {
       console.warn('[ProductService] Redis set error:', error);
     }
   }
-
   // Always update in-memory cache as fallback/local cache
   productCache.set(key, {
     data: product,
@@ -1269,18 +804,14 @@ export async function getCachedProducts(
       console.warn('[ProductService] Redis query get error:', error);
     }
   }
-
   // Fallback to in-memory
   const entry = queryCache.get(key);
-
   if (!entry) return null;
-
   // Check expiry
   if (Date.now() > entry.expiry) {
     queryCache.delete(key);
     return null;
   }
-
   return entry.data;
 }
 
@@ -1301,13 +832,11 @@ export async function cacheProducts(
       console.warn('[ProductService] Redis query set error:', error);
     }
   }
-
   // Update in-memory cache
   queryCache.set(key, {
     data: result,
     expiry: Date.now() + CACHE_TTL,
   });
-
   // Also cache individual products from the result
   // This helps populate the single-product cache
   // We do this asynchronously to not block the response
@@ -1315,60 +844,158 @@ export async function cacheProducts(
     .catch(err => console.error('[ProductService] Error caching individual products:', err));
 }
 
+// ============================================================================
+// PRODUCT FETCH BY ID FUNCTIONS
+// ============================================================================
+
 /**
- * Generate TikTok Shop API Signature (HMAC-SHA256)
+ * Fetch a specific product from Printify by ID
  *
- * Algorithm:
- * 1. Extract all query parameters (excluding sign and access_token)
- * 2. Sort parameters alphabetically by key
- * 3. Concatenate key+value
- * 4. Prepend API path
- * 5. Append request body (if present)
- * 6. Wrap with app_secret
- * 7. Generate HMAC-SHA256
- *
- * @param appSecret - TikTok Shop App Secret
- * @param path - API Path (e.g. /product/202309/products/search)
- * @param params - Query parameters
- * @param body - Request body (optional)
+ * @param id - Product ID
+ * @returns Promise resolving to product or null
  */
-export function generateTikTokSignature(
-  appSecret: string,
-  path: string,
-  params: Record<string, string | number>,
-  body?: any
-): { signature: string; timestamp: number } {
-  const timestamp = Math.floor(Date.now() / 1000);
-  const paramsWithTimestamp = { ...params, timestamp };
-
-  // 1. Sort keys (excluding sign and access_token)
-  const sortedKeys = Object.keys(paramsWithTimestamp)
-    .filter((k) => k !== 'sign' && k !== 'access_token')
-    .sort();
-
-  // 2. Concatenate key+value
-  let input = '';
-  for (const key of sortedKeys) {
-    input += `${key}${paramsWithTimestamp[key]}`;
+async function getPrintifyProductById(id: string): Promise<Product | null> {
+  if (!API_CONFIG.printify.enabled || !API_CONFIG.printify.apiKey) {
+    // Only warn if enabled but missing key (though enabled checks key presence)
+    if (API_CONFIG.printify.enabled) console.warn('[ProductService] Printify API key missing');
+    return null;
   }
-
-  // 3. Prepend path
-  input = path + input;
-
-  // 4. Append body
-  if (body && Object.keys(body).length > 0) {
-    input += JSON.stringify(body);
+  try {
+    // Printify API: GET /shops/{shop_id}/products/{product_id}.json
+    const shopId = process.env.PRINTIFY_SHOP_ID;
+    if (!shopId) {
+      // Cannot fetch without shop ID
+      return null;
+    }
+    const response = await fetch(`${API_CONFIG.printify.baseUrl}/shops/${shopId}/products/${id}.json`, {
+      headers: {
+        'Authorization': `Bearer ${API_CONFIG.printify.apiKey}`,
+      },
+    });
+    if (!response.ok) {
+      // If 404, product not found
+      if (response.status === 404) return null;
+      throw new Error(`Printify API error: ${response.statusText}`);
+    }
+    const data = await response.json();
+    return transformPrintifyProduct(data);
+  } catch (error) {
+    console.error(`[ProductService] Error fetching Printify product ${id}:`, error);
+    return null;
   }
+}
 
-  // 5. Wrap with secret
-  const plainText = `${appSecret}${input}${appSecret}`;
+/**
+ * Fetch a specific product from Amazon by ID
+ *
+ * @param id - Product ID
+ * @returns Promise resolving to product or null
+ */
+async function getAmazonProductById(id: string): Promise<Product | null> {
+  if (!API_CONFIG.amazon.enabled) {
+    return null;
+  }
+  try {
+    // Amazon PAAPI: GetItems
+    // Note: Amazon PAAPI requires complex signing (AWS Signature V4).
+    // Without the `amazon-paapi` package or a similar helper, we cannot
+    // easily construct the fetch call here in plain JS/TS without implementing
+    // the full signing algorithm.
+    // For now, we will assume a helper `fetchAmazonItem` exists or we'd need to install a library.
+    // Since we can't install libraries freely, we will leave this as a structured stub
+    // but without the "pending" log to reduce noise, effectively disabling it
+    // until the signing logic is available.
+    /*
+    const request = {
+      ItemIds: [id],
+      Resources: [
+        'Images.Primary.Large',
+        'ItemInfo.Title',
+        'ItemInfo.Features',
+        'ItemInfo.ProductInfo',
+        'Offers.Listings.Price'
+      ],
+      PartnerTag: API_CONFIG.amazon.partnerTag,
+      PartnerType: 'Associates',
+      Marketplace: 'www.amazon.com'
+    };
+    */
+    // return transformAmazonProduct(item);
+    return null;
+  } catch (error) {
+    console.error(`[ProductService] Error fetching Amazon product ${id}:`, error);
+    return null;
+  }
+}
 
-  // 6. HMAC-SHA256
-  const hmac = crypto.createHmac('sha256', appSecret);
-  hmac.update(plainText);
-  const signature = hmac.digest('hex');
+/**
+ * Fetch a specific product from Etsy by ID
+ *
+ * @param id - Product ID
+ * @returns Promise resolving to product or null
+ */
+async function getEtsyProductById(id: string): Promise<Product | null> {
+  if (!API_CONFIG.etsy.enabled || !API_CONFIG.etsy.apiKey) {
+    return null;
+  }
+  try {
+    // Etsy API: GET /application/listings/{listing_id}
+    const response = await fetch(
+      `${API_CONFIG.etsy.baseUrl}/application/listings/${id}`,
+      {
+        headers: {
+          'x-api-key': API_CONFIG.etsy.apiKey,
+        },
+      }
+    );
+    if (!response.ok) {
+      if (response.status === 404) return null;
+      throw new Error(`Etsy API error: ${response.statusText}`);
+    }
+    const data = await response.json();
+    return transformEtsyProduct(data);
+  } catch (error) {
+    console.error(`[ProductService] Error fetching Etsy product ${id}:`, error);
+    return null;
+  }
+}
 
-  return { signature, timestamp };
+/**
+ * Fetch a specific product from TikTok Shop by ID
+ *
+ * @param id - Product ID
+ * @returns Promise resolving to product or null
+ */
+async function getTikTokShopProductById(id: string): Promise<Product | null> {
+  if (!API_CONFIG.tiktokShop.enabled) {
+    return null;
+  }
+  try {
+    // TikTok Shop API
+    // Need to generate signature
+    const timestamp = Math.floor(Date.now() / 1000);
+    const path = '/api/products/details';
+    // const signature = generateTikTokSignature(...)
+    // Note: Since we lack the signature generation logic in this context,
+    // we cannot fully implement this without the helper.
+    // However, we construct the request as best as possible.
+    const url = new URL(`${API_CONFIG.tiktokShop.baseUrl}${path}`);
+    url.searchParams.append('product_id', id);
+    url.searchParams.append('timestamp', timestamp.toString());
+    // Fallback if signature helper is missing: abort
+    // if (!generateTikTokSignature) return null;
+    const response = await fetch(url.toString(), {
+      headers: {
+        'x-tts-access-token': API_CONFIG.tiktokShop.apiKey!,
+      }
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return transformTikTokProduct(data);
+  } catch (error) {
+    console.error(`[ProductService] Error fetching TikTok product ${id}:`, error);
+    return null;
+  }
 }
 
 // ============================================================================
@@ -1449,4 +1076,64 @@ function transformTikTokProduct(tiktokProduct: any): Product {
     vendorName: 'TikTok Shop',
     tags: [],
   };
+}
+
+// ============================================================================
+// TIKTOK SHOP SIGNATURE GENERATION
+// ============================================================================
+
+/**
+ * Generate TikTok Shop API Signature (HMAC-SHA256)
+ *
+ * Algorithm:
+ * 1. Extract all query parameters (excluding sign and access_token)
+ * 2. Sort parameters alphabetically by key
+ * 3. Concatenate key+value
+ * 4. Prepend API path
+ * 5. Append request body (if present)
+ * 6. Wrap with app_secret
+ * 7. Generate HMAC-SHA256
+ *
+ * @param appSecret - TikTok Shop App Secret
+ * @param path - API Path (e.g. /product/202309/products/search)
+ * @param params - Query parameters
+ * @param body - Request body (optional)
+ */
+export function generateTikTokSignature(
+  appSecret: string,
+  path: string,
+  params: Record<string, string | number>,
+  body?: any
+): { signature: string; timestamp: number } {
+  const timestamp = Math.floor(Date.now() / 1000);
+  const paramsWithTimestamp = { ...params, timestamp };
+
+  // 1. Sort keys (excluding sign and access_token)
+  const sortedKeys = Object.keys(paramsWithTimestamp)
+    .filter((k) => k !== 'sign' && k !== 'access_token')
+    .sort();
+
+  // 2. Concatenate key+value
+  let input = '';
+  for (const key of sortedKeys) {
+    input += `${key}${paramsWithTimestamp[key]}`;
+  }
+
+  // 3. Prepend path
+  input = path + input;
+
+  // 4. Append body
+  if (body && Object.keys(body).length > 0) {
+    input += JSON.stringify(body);
+  }
+
+  // 5. Wrap with secret
+  const plainText = `${appSecret}${input}${appSecret}`;
+
+  // 6. HMAC-SHA256
+  const hmac = crypto.createHmac('sha256', appSecret);
+  hmac.update(plainText);
+  const signature = hmac.digest('hex');
+
+  return { signature, timestamp };
 }

@@ -20,7 +20,7 @@ import {
   Users,
 } from 'lucide-react';
 import type { EnrichedContact } from '@/lib/autopopulate/types';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { EditContactDialog } from '@/components/autopopulate/EditContactDialog';
 
@@ -194,7 +194,7 @@ export default function AutoPopulatePage() {
             AI-powered contact enrichment with birthday predictions, relationship inference, and gifting profiles
           </p>
         </div>
-        <Link to="/contacts">
+        <Link href="/contacts">
           <Button variant="outline">← Back to Contacts</Button>
         </Link>
       </div>
